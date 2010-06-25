@@ -110,6 +110,7 @@ DEVICE_DDR2Regs;
 
 #define DDR                         ((DEVICE_DDR2Regs*) 0x20000000)
 
+#define RAMADDR			0x80000000
 
 extern int pll1_setup(void);
 extern int pll2_setup(void);
