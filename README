@@ -1,0 +1,25 @@
+
+This package is a brand new UBL implementation for DM365.  The reason
+for it is the need for SD boot, missing in the original package.
+
+Unfortunately, the original package was too low quality to be worth
+spending time on it. For example, it doesn't clear the BSS and so forth.
+However, some source files come from there. I preserved attribution and
+license (GNU GPL 2 like this whole package).
+
+To compile set CROSS_COMPILE in your environment and then call make.
+The binary (and all related files) is called bubl, "bubl.bin" is
+ready to be programmed in SPI and "bubl" is an ELF file for debugging.
+
+As should be known to the reader, this runs in TCM (tighly coupled memory),
+which is ITCM ad address 0 and DTCM at address 0x10000 (64k).
+Thus, memory placement is like this:
+
+instructions:
+	0x0.0000: header for SPI
+	0x0.0100: entry point (like original ubl, for easy transition)
+	0x0.0200: real code start (after stack space). Up to 0x0.8000
+
+data (overlapping):
+	0x1.01fc: start of stack, going down (so we have 512b)
+	0x1.8000: 32kB of buffer space.
