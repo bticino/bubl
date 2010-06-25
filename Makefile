@@ -26,7 +26,9 @@ CFLAGS = -O2 -Wall -ggdb -ffreestanding -Iinclude
 all: $(ALL)
 
 # objects that make the program
-obj-y = header.o boot.o pll.o hw-misc.o serial.o main.o
+obj-y += header.o boot.o pll.o hw-misc.o serial.o main.o
+obj-y += lib/ctype.o lib/string.o
+obj-y += lib/sprintf.o lib/strtol.o lib/printk.o lib/vsprintf.o
 
 # main rule
 $(ELF): $(obj-y) $(LDS) 
@@ -41,4 +43,4 @@ $(SREC): $(ELF)
 
 # other rules
 clean:
-	rm -f $(ALL) *.o *~ */*~ include/*/*~ $(MAP)
+	rm -f $(ALL) $(obj-y) *~ */*~ include/*/*~ $(MAP)
