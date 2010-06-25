@@ -11,5 +11,10 @@ clearbss:
 	cmp	r1, r2
 	blt	1b
 	bl	bubl_main
+	/* Bubl_main should not return... */
+	adr	r0, msg
+	bl	puts
 0:
 	b 0b
+
+msg:	.asciz "Panic: main returned\n"
