@@ -84,8 +84,37 @@ DEVICE_SysModuleRegs;
 
 #define SYSTEM ((DEVICE_SysModuleRegs*) 0x01C40000)
 
+// DDR2 Memory Ctrl Register structure - See sprueh7d.pdf for more details.
+typedef struct _DEVICE_DDR2_REGS_
+{
+  VUint8 RSVD0[4];        //0x00
+  VUint32 SDRSTAT;        //0x04
+  VUint32 SDBCR;          //0x08
+  VUint32 SDRCR;          //0x0C
+  VUint32 SDTIMR;         //0x10
+  VUint32 SDTIMR2;        //0x14
+  VUint8 RSVD1[4];        //0x18
+  VUint32 SDBCR2;         //0x1C
+  VUint32 PBBPR;          //0x20
+  VUint8 RSVD2[156];      //0x24
+  VUint32 IRR;            //0xC0
+  VUint32 IMR;            //0xC4
+  VUint32 IMSR;           //0xC8
+  VUint32 IMCR;           //0xCC
+  VUint8 RSVD3[20];       //0xD0
+  VUint32 DDRPHYCR;       //0xE4
+  VUint32 DDRPHYCR2;       //0xE8
+  VUint8 RSVD4[4];        //0xEC
+}
+DEVICE_DDR2Regs;
+
+#define DDR                         ((DEVICE_DDR2Regs*) 0x20000000)
+
+
 extern int pll1_setup(void);
 extern int pll2_setup(void);
+extern int ddr_setup(void);
+
 
 static inline void trivial_loop(int i)
 {
