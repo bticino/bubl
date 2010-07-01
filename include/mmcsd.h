@@ -53,9 +53,9 @@ typedef s8     Int8;
 #define MMCSD_MMCFIFOCTL        *( volatile Uint32* )( MMCSD_BASE + 0x74 )
 
 
-//#define E_FAIL              1
+#define E_FAIL              1
 #define E_INVALID_INPUT     2
-//#define E_TIMEOUT           3
+#define E_TIMEOUT           3
 #define E_DEVICE            4
 #define E_MISC              0xF800
 
