@@ -1,9 +1,10 @@
 /*
  *  Copyright 2008 by Spectrum Digital Incorporated.
  *  All rights reserved. Property of Spectrum Digital Incorporated.
+ *  (FIXME: can we really use this crap here?)
  */
 
-#include "evmdm365.h"
+#include <evmdm365.h>
 
 #ifndef _MMCSD_H
 #define _MMCSD_H
@@ -84,27 +85,27 @@
 /*
  *  Status bits of Register - Status0
  */
-#define MMCSD_STAT0_DATDNE      0x0001      // Data Done Status
-#define MMCSD_STAT0_BSYDNE      0x0002      // Busy Done Status
-#define MMCSD_STAT0_RSPDNE      0x0004      // Command / Response Done Status
-#define MMCSD_STAT0_TOUTRD      0x0008      // Time-Out ( read data ) Status
-#define MMCSD_STAT0_TOUTRS      0x0010      // Time-Out ( response ) Status
-#define MMCSD_STAT0_CRCWR       0x0020      // CRC error ( write data ) Status
-#define MMCSD_STAT0_CRCRD       0x0040      // CRC error ( read data ) Status
-#define MMCSD_STAT0_CRCRS       0x0080      // CRC error ( response ) Status
-#define MMCSD_STAT0_SPIERR      0x0100      // Data Error ( in SPI mode ) Status
-#define MMCSD_STAT0_DXRDY       0x0200      // Data Transmit Ready Status
-#define MMCSD_STAT0_DRRDY       0x0400      // Data Receive Ready Status
-#define MMCSD_STAT0_DATED       0x0800      // DAT3 Edge Detect Status
+#define MMCSD_STAT0_DATDNE      0x0001      // Data Done
+#define MMCSD_STAT0_BSYDNE      0x0002      // Busy Done
+#define MMCSD_STAT0_RSPDNE      0x0004      // Command / Response Done
+#define MMCSD_STAT0_TOUTRD      0x0008      // Time-Out ( read data )
+#define MMCSD_STAT0_TOUTRS      0x0010      // Time-Out ( response )
+#define MMCSD_STAT0_CRCWR       0x0020      // CRC error ( write data )
+#define MMCSD_STAT0_CRCRD       0x0040      // CRC error ( read data )
+#define MMCSD_STAT0_CRCRS       0x0080      // CRC error ( response )
+#define MMCSD_STAT0_SPIERR      0x0100      // Data Error ( in SPI mode )
+#define MMCSD_STAT0_DXRDY       0x0200      // Data Transmit Ready
+#define MMCSD_STAT0_DRRDY       0x0400      // Data Receive Ready
+#define MMCSD_STAT0_DATED       0x0800      // DAT3 Edge Detect
 
 /*
  *  Status bits of Register - Status1
  */
-#define MMCSD_STAT1_BUSY        0x0001      // Busy Status
-#define MMCSD_STAT1_CLKSTP      0x0002      // Clock Stop Status
-#define MMCSD_STAT1_DXEMP       0x0004      // Data transmit empty Status
-#define MMCSD_STAT1_DRFUL       0x0008      // Data receive full Status
-#define MMCSD_STAT1_DAT3ST      0x0010      // DAT3 Status
+#define MMCSD_STAT1_BUSY        0x0001      // Busy
+#define MMCSD_STAT1_CLKSTP      0x0002      // Clock Stop
+#define MMCSD_STAT1_DXEMP       0x0004      // Data transmit empty
+#define MMCSD_STAT1_DRFUL       0x0008      // Data receive full
+#define MMCSD_STAT1_DAT3ST      0x0010      // DAT3
 #define MMCSD_STAT1_FIFOEMP     0x0020      // FIFO empty status
 #define MMCSD_STAT1_FIFOFULL    0x0040      // FIFO full status
 
@@ -137,15 +138,15 @@ typedef struct {
     Uint16 dat3Detect;          // DAT3 Edge detection
     Uint8 cardReadyFlag;        // Card Ready flag in SDIO init response TRUE:
                                 // Card Ready FALSE: Card not ready
-    Uint8 IOflag;               // SDIO I/O function flag TRUE: I/O present FALSE: I/O absent
+    Uint8 IOflag;               // SDIO I/O function flag 1= I/O present
     Uint8 memoryFlag;           // SD memory function presence flag
                                 // TRUE: memory present FALSE: memory absent
-    Uint8 numFunctions;         // Number of I/O functions available in SDIO card
-    Uint8 spiModeEnable;        // SPI mode, TRUE:Enable SPI Mode, FALSE:Enable Native Mode
-    Uint8 csEnable;             // Card Select enable when writing, TRUE:CS output
-                                // is LOW, FALSE: CS output is HIGH. Valid Only in SPI mode
-    Uint8 spiCrcErrCheckEnable; // CRC Error check enabled, TRUE:Enable CRC check,
-                                // FALSE:Disable CRC check. Valid Only in SPI mode
+    Uint8 numFunctions;         // Number of I/O functions available in card
+    Uint8 spiModeEnable;        // SPI mode, TRUE: SPI Mode, FALSE: Native Mode
+    Uint8 csEnable;             // Card Select enable in outout, TRUE:CS output
+                                // is 0, FALSE: CS output is 1. Only  SPI mode
+    Uint8 spiCrcErrCheckEnable; // CRC Error check enabled, 1=Enable CRC check,
+                                // FALSE:Disable CRC check.  Only in SPI mode
     Uint16 busWidth;            // Data bus width, Only in Native mode,
                                 // MMCSD_DATA_BUS_1:1 bit data bus,
                                 // MMCSD_DATA_BUS_4:4 bit data bus
@@ -154,7 +155,7 @@ typedef struct {
                                 // SPI mode timeout value is equal to this
                                 // value multiplied by 8 MMC CLK clock cycles
     Uint16 timeoutRead;         // Time out value for data read, range from
-                                // 0 to 65535 MMC CLK clock cycles in native mode,
+                                // 0 to ffff MMC CLK  cycles in native mode,
                                 // for SPI mode timeout value is equal to this
                                 // value multiplied by 8 MMC CLK clock cycles
     Uint16 fifoThreshold;       // To set the FIFO depth 16bytes or 32 bytes
@@ -195,26 +196,33 @@ typedef struct {
   Uint8  writeBlkPartial;
   Uint16 writeBlkLenBytes;
   Uint8  wpGrpEnable;
-  Uint8  wpGrpSize;             // Extracting 7 bits: For MMC - 5 bits reqd; For SD - 7 bits reqd. ( have to be taken care by user )
+  Uint8  wpGrpSize;             // 7 bits: For MMC - 5 bits ; For SD - 7 bits
   Uint8  dsrImp;
   Uint8  readBlkMisalign;
   Uint8  writeBlkMisalign;
   Uint8  readBlkPartial;
   Uint16 readBlkLenBytes;
-  Uint8  sysSpecVersion;        // These bits are reserved in the case of SD card
+  Uint8  sysSpecVersion;        //  are reserved in the case of SD card
 } MMCSD_csdRegInfo;
 
 /*----- Function prototypes -----*/
 Uint16 MMCSD_clearResponse  ( );
 Uint16 MMCSD_checkStatus    ( Uint16 event, Int16 timeOut, Int16 operation );
 Uint16 MMCSD_setConfig      ( MMCSD_ConfigData* mmcsdConfig );
-Uint16 MMCSD_sendCmd        ( Uint32 command, Uint32 argument, Uint8 checkStatus, Uint16 statusBits );
-Uint16 MMCSD_getCardStatus  ( MMCSD_ResponseData* mmcsdResponse, MMCSD_cardStatusReg* cardStatus );
-Uint16 MMCSD_getCardCID     ( MMCSD_ResponseData* mmcsdResponse, Uint16* cardCID );
-Uint16 MMCSD_getCardCSD     ( MMCSD_ResponseData* mmcsdResponse, Uint16* cardCSD, MMCSD_csdRegInfo* localCSDInfo );
+Uint16 MMCSD_sendCmd        ( Uint32 command, Uint32 argument,
+			      Uint8 checkStatus, Uint16 statusBits );
+Uint16 MMCSD_getCardStatus  ( MMCSD_ResponseData* mmcsdResponse,
+			      MMCSD_cardStatusReg* cardStatus );
+Uint16 MMCSD_getCardCID     ( MMCSD_ResponseData* mmcsdResponse,
+			      Uint16* cardCID );
+Uint16 MMCSD_getCardCSD     ( MMCSD_ResponseData* mmcsdResponse,
+			      Uint16* cardCSD,
+			      MMCSD_csdRegInfo* localCSDInfo );
 
-Uint16 MMCSD_readNWords     ( Uint32* data, Uint32 numofBytes, Uint32 cardMemAddr );
-Uint16 MMCSD_writeNWords    ( Uint32* data, Uint32 numofBytes, Uint32 cardMemAddr );
+Uint16 MMCSD_readNWords     ( Uint32* data, Uint32 numofBytes,
+			      Uint32 cardMemAddr );
+Uint16 MMCSD_writeNWords    ( Uint32* data, Uint32 numofBytes,
+			      Uint32 cardMemAddr );
 
 #define MMCSD_VDD_32_34         0x00300000
 
@@ -259,13 +267,21 @@ Uint16 MMCSD_writeNWords    ( Uint32* data, Uint32 numofBytes, Uint32 cardMemAdd
 /* Function Prototypes */
 Uint16 MMCSD_goIdleState        ( );
 Uint16 MMCSD_allSendCID         ( );
-Uint16 MMCSD_sendStatus         ( Uint32 rca, MMCSD_cardStatusReg* cardStatus );
+Uint16 MMCSD_sendStatus         ( Uint32 rca, MMCSD_cardStatusReg* cardStatus);
 Uint16 MMCSD_selectCard         ( Uint32 rca );
 Uint16 MMCSD_sendCSD            ( Uint32 rca, Uint16* cardCSD );
 Uint16 MMCSD_appCmd             ( Uint32 rca );
-Uint16 MMCSD_singleBlkRead      ( Uint32 cardMemAddr, Uint32* dest, Uint32 blklength, Uint32 endian );
-Uint16 MMCSD_singleBlkWrite     ( Uint32 cardMemAddr, Uint32* src, Uint32 blklength, Uint32 endian );
-Uint16 MMCSD_initCard           ( Uint32* relCardAddr, MMCSD_cardStatusReg* cardStatus, MMCSD_ConfigData* mmcsdConfig, Uint16 fifoThrlevel );
-Uint16 MMCSD_cardIdentification ( MMCSD_ConfigData* mmcsdConfig, Uint32* relCardAddr, MMCSD_cardStatusReg* cardStatus, Uint32 opTimeout );
+Uint16 MMCSD_singleBlkRead      ( Uint32 cardMemAddr, Uint32* dest,
+				  Uint32 blklength, Uint32 endian );
+Uint16 MMCSD_singleBlkWrite     ( Uint32 cardMemAddr, Uint32* src,
+				  Uint32 blklength, Uint32 endian );
+Uint16 MMCSD_initCard           ( Uint32* relCardAddr,
+				  MMCSD_cardStatusReg* cardStatus,
+				  MMCSD_ConfigData* mmcsdConfig,
+				  Uint16 fifoThrlevel );
+Uint16 MMCSD_cardIdentification ( MMCSD_ConfigData* mmcsdConfig,
+				  Uint32* relCardAddr,
+				  MMCSD_cardStatusReg* cardStatus,
+				  Uint32 opTimeout );
 
 #endif
