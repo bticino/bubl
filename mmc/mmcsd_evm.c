@@ -3,7 +3,8 @@
  *  All rights reserved. Property of Spectrum Digital Incorporated.
  */
 
-#include "mmcsd.h"
+#include <mmcsd.h>
+#include <bubl/delay.h>
 
 Uint16 MMCSD_clearResponse( )
 {
@@ -51,7 +52,7 @@ Uint16 MMCSD_sendCmd( Uint32 command, Uint32 argument,
 	MMCSD_MMCCMD = command;
 
 	/* Delay loop allowing cards to respond */
-	EVMDM365_waitusec( 20 );
+	udelay( 20 );
 
 	if ( checkStatus )
 	{
@@ -208,7 +209,7 @@ Uint16 MMCSD_writeNWords( Uint32* data, Uint32 numofBytes, Uint32 cardMemAddr )
 
 	/* Reset the FIFO  */
 	MMCSD_MMCFIFOCTL |= 1;
-	EVMDM365_waitusec(10);
+	udelay(10);
 
 	/* Set the Transfer direction from the FIFO as transmit*/
 	MMCSD_MMCFIFOCTL |= 2;
