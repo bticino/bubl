@@ -4,10 +4,19 @@
  *  (FIXME: can we really use this crap here?)
  */
 
-#include <evmdm365.h>
 
 #ifndef _MMCSD_H
 #define _MMCSD_H
+
+#include <bubl/types.h>
+
+/* crap crap crap */
+typedef u32    Uint32;
+typedef u16    Uint16;
+typedef u8     Uint8;
+typedef s32    Int32;
+typedef s16    Int16;
+typedef s8     Int8;
 
 
 /* ------------------------------------------------------------------------ *
