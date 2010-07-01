@@ -3,7 +3,8 @@
  *  All rights reserved. Property of Spectrum Digital Incorporated.
  */
 
-#include "mmcsd.h"
+#include <bubl/delay.h>
+#include <mmcsd.h>
 
 MMCSD_ResponseData mmcsdResponse;
 MMCSD_csdRegInfo mmcsdCSDRegInfo;
@@ -102,8 +103,8 @@ Uint16 MMCSD_sendStatus( Uint32 rca, MMCSD_cardStatusReg *cardStatus )
 {
 	Uint16 status;
 
-	if ( status = MMCSD_sendCmd( MMCSD_SEND_STATUS, rca << 16,
-				     1, MMCSD_STAT0_RSPDNE ) )
+	if ( (status = MMCSD_sendCmd( MMCSD_SEND_STATUS, rca << 16,
+				     1, MMCSD_STAT0_RSPDNE )) )
 		return status;
 
 	MMCSD_getCardStatus( &mmcsdResponse, cardStatus );
@@ -121,8 +122,8 @@ Uint16 MMCSD_selectCard( Uint32 rca )
 	if ( rca == 0 )
 		return E_INVALID_INPUT;
 
-	if ( status = MMCSD_sendCmd( MMCSD_SELECT_CARD, rca << 16, 1,
-				     MMCSD_STAT0_RSPDNE ) )
+	if ( (status = MMCSD_sendCmd( MMCSD_SELECT_CARD, rca << 16, 1,
+				     MMCSD_STAT0_RSPDNE )) )
 		return status;
 
 	if ( ( status = MMCSD_sendStatus( rca, &cardStatus ) ) == 0 )
@@ -142,7 +143,8 @@ Uint16 MMCSD_sendCSD( Uint32 rca, Uint16 *cardCSD )
 {
 	Uint16 status;
 
-	if ( status = MMCSD_sendCmd( MMCSD_SEND_CSD, rca << 16, 1, MMCSD_STAT0_RSPDNE ) )
+	if ( (status = MMCSD_sendCmd( MMCSD_SEND_CSD, rca << 16, 1,
+				      MMCSD_STAT0_RSPDNE )) )
 		return status;
 
 	MMCSD_getCardCSD( &mmcsdResponse, cardCSD, &mmcsdCSDRegInfo );
@@ -185,7 +187,7 @@ Uint16 MMCSD_singleBlkRead( Uint32 cardMemAddr, Uint32 *dest,
 
 	/* reset the FIFO  */
 	MMCSD_MMCFIFOCTL |= 1;
-	EVMDM365_waitusec(10);
+	udelay(10);
 
 	/* Set the Transfer direction from the FIFO as receive*/
 	MMCSD_MMCFIFOCTL &= 0xFFFD;
@@ -209,7 +211,7 @@ Uint16 MMCSD_singleBlkRead( Uint32 cardMemAddr, Uint32 *dest,
 			return E_FAIL;
 	}
 
-	EVMDM365_waitusec(10000);
+	mdelay(10);
 	return 0;
 }
 
@@ -242,7 +244,7 @@ Uint16 MMCSD_singleBlkWrite( Uint32 cardMemAddr, Uint32 *src,
 					    cardMemAddr );
 
 		/* Delay Required*/
-		EVMDM365_waitusec( 100000 );
+		mdelay(100);
 
 		if ( status )
 			return E_FAIL;
@@ -251,7 +253,7 @@ Uint16 MMCSD_singleBlkWrite( Uint32 cardMemAddr, Uint32 *src,
 		if ( MMCSD_checkStatus( MMCSD_STAT0_DATDNE, 0, 0 ) )
 			return E_FAIL;
 
-		EVMDM365_waitusec(10000);
+		mdelay(10);
 	}
 	return 0;
 }
@@ -284,15 +286,15 @@ Uint16 SD_sendOpCond( Uint32 voltageWindow, Uint32 opTimeOut )
 	for ( ; opTimeOut > 0 ; opTimeOut-- )
 	{
 		/* Format and send: window is usually 0x00300000( 3.4-3.2v ) */
-		if ( status = MMCSD_sendCmd( SD_APP_OP_COND, voltageWindow,1,
-					     MMCSD_STAT0_RSPDNE ) )
+		if ( (status = MMCSD_sendCmd( SD_APP_OP_COND, voltageWindow,1,
+					     MMCSD_STAT0_RSPDNE )) )
 			return status;
 
 		if ( MMCSD_MMCRSP67 & 0x80000000 )
 			return 0;
 
 		/* Send CMD55 with RCA = 0 for the next iteration */
-		if ( status = MMCSD_appCmd( 0 ) )
+		if ( (status = MMCSD_appCmd( 0 )) )
 			return status;
 	}
 
@@ -311,8 +313,8 @@ Uint16 SD_sendRCA( Uint32* rcaRcvd )
 	 *  the default value for all cards. Also, the rca value is sent as
 	 *  the upper 16 bits of the command argument
 	 */
-	if ( status = MMCSD_sendCmd( SD_SEND_RELATIVE_ADDR, 0, 1,
-				     MMCSD_STAT0_RSPDNE ) )
+	if ( (status = MMCSD_sendCmd( SD_SEND_RELATIVE_ADDR, 0, 1,
+				     MMCSD_STAT0_RSPDNE )) )
 		return status;
 
 	*rcaRcvd = MMCSD_MMCRSP67 >> 16;
@@ -324,12 +326,12 @@ Uint16 SD_sendRCA( Uint32* rcaRcvd )
  */
 Uint16 SD_setBusWidth( Uint32 rca, Uint8 busWidth, Uint32 opTimeOut )
 {
-	Uint16 status;
+	Uint16 status = 0;
 
 	for ( ; opTimeOut > 0 ; opTimeOut-- )
 	{
 		/* Send CMD55 */
-		if ( status = MMCSD_appCmd( rca ) )
+		if ( (status = MMCSD_appCmd( rca )) )
 			return E_MISC;
 
 		if ( ( status = MMCSD_sendCmd( SD_SET_BUS_WIDTH, busWidth, 1,
@@ -360,14 +362,14 @@ Uint16 MMCSD_cardIdentification( MMCSD_ConfigData* config, Uint32* rca,
 	Uint8 mmc = 1;
 
 	/* Place all cards in idle state */
-	if ( status = MMCSD_goIdleState( ) )
+	if ( (status = MMCSD_goIdleState( )) )
 		return status;
 
 	/* Send the operating Voltage Range */
  RESEND_CMD41:
 
 	/* Introduce a delay for slow cards */
-	EVMDM365_waitusec( 100000 );
+	mdelay(100);
 
 	status = MMCSD_appCmd( 0 );     /* Send CMD55 with RCA = 0 */
 
@@ -386,29 +388,29 @@ Uint16 MMCSD_cardIdentification( MMCSD_ConfigData* config, Uint32* rca,
 	cardStatus->multiMediaCard = mmc;
 
 	/* Ask all cards to send their CIDs */
-	if ( status = MMCSD_allSendCID( ) )
+	if ( (status = MMCSD_allSendCID( )) )
 		return status;
 
 	MMCSD_getCardCID( &mmcsdResponse, cardReg );
 
 	/* Read Relative Address from the card and store it in variable rca */
-	if ( status = SD_sendRCA( rca ) )
+	if ( (status = SD_sendRCA( rca )) )
 		return status;
 
 	/* Read the CSD structure for MMC/SD */
-	if ( status = MMCSD_sendCSD( *rca, cardReg ) )
+	if ( (status = MMCSD_sendCSD( *rca, cardReg )) )
 		return status;
 
 	/* Select the Card which responded */
-	if ( status = MMCSD_selectCard( *rca ) )
+	if ( (status = MMCSD_selectCard( *rca )) )
 		return status;
 
 	if ( *rca > 0 )
-		if ( status = MMCSD_sendStatus( *rca, cardStatus ) )
+		if ( (status = MMCSD_sendStatus( *rca, cardStatus )) )
 			return status;
 
 	if ( config->busWidth == MMCSD_DATA_BUS_4 )
-		if ( status = SD_setBusWidth( *rca, 2, 2048 ) )
+		if ( (status = SD_setBusWidth( *rca, 2, 2048 )) )
 			return status;
 
 	return status;
@@ -433,13 +435,13 @@ Uint16 MMCSD_initCard( Uint32* relCardAddr, MMCSD_cardStatusReg* cardStatus,
 		MMCSD_MMCFIFOCTL |= 0x0004;
 
 	MMCSD_MMCCTL = 0x0007;        // Put the CMD and Data in RESET state
-	EVMDM365_waitusec(10);
+	udelay(10);
 
 	/*
 	 *  Configuration Set; Clk: MMC Clk Rt = ARMClock/fnClkRate+1,
 	 *  MMC Clk o/p =( MMC Clk Rt/2*( mmcClockRateDiv+1 ) )
 	 */
-	if ( status = MMCSD_setConfig( config ) )
+	if ( (status = MMCSD_setConfig( config )) )
 		return status;
 
 	/* Identification cycle of MMC/SD */
