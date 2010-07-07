@@ -43,4 +43,9 @@ $(SREC): $(ELF)
 
 # other rules
 clean:
-	rm -f $(ALL) $(obj-y) *~ */*~ include/*/*~ $(MAP)
+	rm -f $(ALL) $(obj-y) *~ */*~ include/*/*~ $(MAP) .depend
+
+include .depend
+
+.depend: $(obj-s:.o=.S) $(obj-c:.o=.c)
+	$(CC) $(CFLAGS) -M $^ > $@
