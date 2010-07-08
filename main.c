@@ -2,6 +2,9 @@
 #include <bubl/hw.h>
 #include <bubl/hw-misc.h>
 #include <bubl/tools.h>
+#include <bubl/delay.h>
+
+#include <mmcsd.h>
 
 static unsigned ram_test(int base)
 {
@@ -50,6 +53,19 @@ void bubl_main(void)
 /* This is the real work being done: the stack pointer is not at end-of-ram */
 void __attribute__((noreturn, noinline)) bubl_work(void)
 {
+
+	sdcard_init();
+
+	/* Check how long udelay takes */
+	int i;
+	for (i=1; i < 10; i++) {
+		printk("will delay %i sec... ", i);
+		mdelay(i*1000);
+		printk("done\n");
+		mdelay(1000);
+	}
+
+
 	/* Nothing to do by now */
 	while (1)
 		;
