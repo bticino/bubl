@@ -48,9 +48,25 @@ static void POR_RESET(void)
 	}
 }
 
-void DEVICE_PSCInit()
+static void psc_turn_on(int id)
 {
+	/* wait for previous transitions to complete (GOSTAT bit) */
+	while(PSC->PTSTAT & 1)
+		;
+	/* set next to on and start transition (GO bit) */
+	PSC->MDCTL[id] |= 3;
+	PSC->PTCMD = 1;
 
+	/* wait for this transitions to complete (GOSTAT bit) */
+	while(PSC->PTSTAT & 1)
+		;
+	/* wait for the device to be in state 3 (needed?) */
+	while((PSC->MDSTAT[id] & 0x1f) != 3)
+		;
+}
+
+void DEVICE_PSCInit() /* power and sleep controller, chapter 7 of arm-subsys */
+{
 	unsigned char i=0;
 	unsigned char lpsc_start;
 	unsigned char lpsc_end,lpscgroup,lpscmin,lpscmax;
@@ -113,8 +129,20 @@ int misc_setup0(void)
 	POR_RESET();
 
 	// System PSC setup - enable all
-	DEVICE_PSCInit();
+	if (0) {
+		DEVICE_PSCInit();
+	} else {
+		psc_turn_on(19); /* uart == 19 */
+		psc_turn_on(13); /* sdram == 13 */
+		psc_turn_on(15); /* mmc == 15 */
+		psc_turn_on(26); /* gpio == 26 */
+	}
 
+#if 1
+	/*
+	 * I can't remove these settings or the uart won't work.
+	 * I should find the bits needed for uart alone, but I haven't
+	 */
 	DEVICE_pinmuxControl(0,0xFFFFFFFF,0x00FD0000);  // All Video Inputs
 	DEVICE_pinmuxControl(1,0xFFFFFFFF,0x00145555);  // All Video Outputs
 	DEVICE_pinmuxControl(2,0xFFFFFFFF,0x000000DA);  // EMIFA
@@ -127,6 +155,7 @@ int misc_setup0(void)
 
 	GPIO->DIR02 &= 0xfeffffff;
 	GPIO->CLRDATA02 = 0x01000000;
+#endif
 	return 0;
 }
 
