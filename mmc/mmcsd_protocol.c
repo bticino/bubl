@@ -4,6 +4,7 @@
  */
 
 #include <bubl/delay.h>
+#include <bubl/tools.h>
 #include <mmcsd.h>
 
 MMCSD_ResponseData mmcsdResponse;
@@ -360,13 +361,20 @@ Uint16 MMCSD_cardIdentification( MMCSD_ConfigData* config, Uint32* rca,
 	Uint16 status;
 	Uint16 cardReg[8];
 	Uint8 mmc = 1;
+	int retry = 5;
 
 	/* Place all cards in idle state */
-	if ( (status = MMCSD_goIdleState( )) )
+	if ( (status = MMCSD_goIdleState( )) ) {
+		printk("MMC/SD Error: probably missing card\n");
 		return status;
+	}
 
 	/* Send the operating Voltage Range */
  RESEND_CMD41:
+	if (!retry--) {
+		printk("MMC/SD Error: maybe unsupported HC card?\n");
+		return E_DEVICE;
+	}
 
 	/* Introduce a delay for slow cards */
 	mdelay(100);
@@ -388,8 +396,10 @@ Uint16 MMCSD_cardIdentification( MMCSD_ConfigData* config, Uint32* rca,
 	cardStatus->multiMediaCard = mmc;
 
 	/* Ask all cards to send their CIDs */
-	if ( (status = MMCSD_allSendCID( )) )
+	if ( (status = MMCSD_allSendCID( )) ) {
+		printk("MMC/SD Error: probably missing card\n");
 		return status;
+	}
 
 	MMCSD_getCardCID( &mmcsdResponse, cardReg );
 
