@@ -13,7 +13,7 @@ ready to be programmed in SPI and "bubl" is an ELF file for debugging.
 
 As should be known to the reader, this runs in TCM (tighly coupled memory),
 which is ITCM ad address 0 and DTCM at address 0x10000 (64k).
-Thus, memory placement is like this:
+Thus, memory placement should be like this:
 
 instructions:
 	0x0.0000: header for SPI
@@ -23,3 +23,20 @@ instructions:
 data (overlapping):
 	0x1.01fc: start of stack, going down (so we have 512b)
 	0x1.8000: 32kB of buffer space.
+
+Actually, there is not need to treat specially DTCM, so everything is
+in the first 64kB.
+
+What bubl does is initializing stuff (PLL and SDRAM, mainly) and setting
+the stack pointer to RAM. Then it uses the sdcard (no HC support currently,
+but the issue is detected) to load 256k of data and jump to it.
+
+Such data is expected to be u-boot, starting from an offset of 4kB within
+the flash. The initial offset allows a partition table to fit, so
+part of the SD memory can be used for a real filesystem.
+
+Data is loaded to address 0x81080000 which is where u-boot usually lives.
+To copy u-boot to SD use something like this:
+
+   dd bs=4k seek=1 if=u-boot.bin of=/dev/sdb
+
