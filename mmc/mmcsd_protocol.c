@@ -201,12 +201,10 @@ Uint16 MMCSD_singleBlkRead( Uint32 cardMemAddr, Uint32 *dest,
 	if ( MMCSD_readNWords( ( Uint32* )dest, blklength, cardMemAddr ) )
 		return E_FAIL;
 
-	for ( i = 0 ; i < 100 ; i++ );
-
 
 	if ( status == 0 )
 	{
-		if ( MMCSD_checkStatus( MMCSD_STAT0_DATDNE, 0, 0 ) == 0 )
+		if ( MMCSD_checkStatus( MMCSD_STAT0_DATDNE, 4, 1 ) == 0 )
 			return 0;
 		else
 			return E_FAIL;
