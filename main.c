@@ -2,6 +2,7 @@
 #include <bubl/hw.h>
 #include <bubl/hw-misc.h>
 #include <bubl/tools.h>
+#include <bubl/string.h>
 #include <bubl/delay.h>
 
 #include <mmcsd.h>
@@ -53,20 +54,36 @@ void bubl_main(void)
 /* This is the real work being done: the stack pointer is not at end-of-ram */
 void __attribute__((noreturn, noinline)) bubl_work(void)
 {
+	unsigned long addr;
+	unsigned long offset = 4096;
+
+	/*
+	 * Read u-boot to address 0x81080000 from offset 4kB.
+	 * Size loaded is 256k
+	 */
+	const unsigned long ub_addr = 0x81080000;
+	const unsigned long ub_size = 1024 * 256;
+	const unsigned long step = 512; /* can't be more than 512 */
+
+	/* make the memory area dirty, to be sure it works */
+	memset((void *)ub_addr, 0xca, ub_size);
 
 	sdcard_init();
-
-	/* Check how long udelay takes */
-	int i;
-	for (i=1; i < 10; i++) {
-		printk("will delay %i sec... ", i);
-		mdelay(i*1000);
-		printk("done\n");
-		mdelay(1000);
+	printk("Loading u-boot ");
+	for (addr = ub_addr;
+	     addr < ub_addr + ub_size;
+	     addr += step, offset += step) {
+		/* last argument "endian" is not used */
+		MMCSD_singleBlkRead(offset, (void *)addr, step, 0);
+		if ((offset & 0x1fff) == 0)
+			printk(".");
 	}
+	printk("\nJumping to u-boot...\n");
 
+	/* jump to u-boot */
+	asm("ldr pc, %0" : /* no output */ : "m" (ub_addr));
 
-	/* Nothing to do by now */
+	/* Loop to prevent compiler warning about noreturn */
 	while (1)
 		;
 }
