@@ -129,7 +129,7 @@ int misc_setup0(void)
 	POR_RESET();
 
 	// System PSC setup - enable all
-	if (0) {
+	if (1) {
 		DEVICE_PSCInit();
 	} else {
 		psc_turn_on(19); /* uart == 19 */
