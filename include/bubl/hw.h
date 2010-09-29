@@ -9,11 +9,7 @@
 
 /* crap crap crap */
 typedef volatile u32	VUint32;
-typedef volatile u16	VUint16;
 typedef volatile u8	VUint8;
-typedef volatile s32	VInt32;
-typedef volatile s16	VInt16;
-typedef volatile s8	VInt8;
 
 
 typedef struct _DEVICE_PLL_REGS_
