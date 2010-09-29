@@ -4,6 +4,7 @@
 #include <bubl/tools.h>
 #include <bubl/string.h>
 #include <bubl/delay.h>
+#include <bubl/timer.h>
 
 #include <mmcsd.h>
 
@@ -30,16 +31,22 @@ static void bubl_work(void);
 void bubl_main(void)
 {
 	unsigned ramsize;
+	int usec1, usec2;
 
+	timer_setup();
+	usec1 = nop(100*1000);
 	misc_setup0();
 	pll1_setup();
 	pll2_setup();
 	ddr_setup();
 	misc_setup1();
 	serial_setup();
+	usec2 = nop(1000*1000);
 
 	printk("Function %s (%s:%i), compile date %s\n",
 	       __FILE__, __func__, __LINE__, __DATE__);
+
+	printk("==> usec1 %i\n==> usec2 %i\n", usec1, usec2);
 
 	/* Check the RAM */
 	ramsize = ram_test(RAMADDR);
