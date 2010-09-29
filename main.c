@@ -5,6 +5,7 @@
 #include <bubl/string.h>
 #include <bubl/delay.h>
 #include <bubl/timer.h>
+#include <bubl/adc.h>
 
 #include <mmcsd.h>
 
@@ -32,21 +33,32 @@ void bubl_main(void)
 {
 	unsigned ramsize;
 	int usec1, usec2;
+	int i, adcvals[6];
 
-	timer_setup();
-	usec1 = nop(100*1000);
 	misc_setup0();
+	timer_setup();
+
+	/* read ADC values, to identify machine types */
+	adc_setup();
+	for (i = 0; i < 6; i++)
+		adcvals[i] = adc_read(i);
+
+	usec1 = nop(1000*1000);
 	pll1_setup();
 	pll2_setup();
+	usec2 = nop(1000*1000);
 	ddr_setup();
 	misc_setup1();
 	serial_setup();
-	usec2 = nop(1000*1000);
 
 	printk("Function %s (%s:%i), compile date %s\n",
 	       __FILE__, __func__, __LINE__, __DATE__);
 
-	printk("==> usec1 %i\n==> usec2 %i\n", usec1, usec2);
+	printk("1M nops before pll: %i usec\n", usec1);
+	printk("1M nops after  pll: %i usec\n", usec2);
+	printk("ADC values: ");
+	for (i = 0; i < 6; i++)
+		printk("%i%c", adcvals[i], i==5 ? '\n' : ' ');
 
 	/* Check the RAM */
 	ramsize = ram_test(RAMADDR);
@@ -85,7 +97,6 @@ void __attribute__((noreturn, noinline)) bubl_work(void)
 		if ((offset & 0x1fff) == 0)
 			printk(".");
 	}
-	printk("\nJumping to u-boot...\n");
 
 	/* jump to u-boot */
 	asm("ldr pc, %0" : /* no output */ : "m" (ub_addr));
