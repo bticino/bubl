@@ -1,6 +1,8 @@
 /*
  * Register definitions for the timer 1
  */
+#ifndef __BUBL_TIMER_H__
+#define __BUBL_TIMER_H__
 #include <bubl/types.h>
 
 enum timer_regs {
@@ -32,3 +34,5 @@ extern void timer_setup(void);
 extern u32 timer_read(void);
 extern u32 count_to_usec(u32 count);
 extern int nop(int nloop);
+
+#endif /* __BUBL_TIMER_H__ */
