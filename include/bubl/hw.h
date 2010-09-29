@@ -112,6 +112,7 @@ DEVICE_DDR2Regs;
 
 #define RAMADDR			0x80000000
 
+extern int pll_bypass(void);
 extern int pll1_setup(void);
 extern int pll2_setup(void);
 extern int ddr_setup(void);

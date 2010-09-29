@@ -6,6 +6,16 @@
  * Partly reordered and cleaned up from crappy "corporate-style" code.
  */
 
+int pll_bypass(void) /* This function added by ARub, as jtag has no reset */
+{
+	/* Put both devices in bypass mode */
+	PLL1->PLLCTL = 0;
+	PLL2->PLLCTL = 0;
+	trivial_loop(150);
+	PLL1->PLLCTL = 8; /* reset */
+	PLL2->PLLCTL = 8; /* reset */
+	return 0;
+}
 
 int pll1_setup(void)
 {
