@@ -1,3 +1,5 @@
+#ifndef __BUBL_HW_H__
+#define __BUBL_HW_H__
 #include <bubl/types.h>
 /*
  * Mostly form device.h by Sandeep Paulraj
@@ -125,5 +127,4 @@ static inline void trivial_loop(int i)
 		;
 }
 
-
-
+#endif /* __BUBL_HW_H__ */
