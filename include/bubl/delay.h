@@ -1,16 +1,15 @@
 #ifndef __BUBL_DELAY_H__
 #define __BUBL_DELAY_H__
+#include <bubl/timer.h>
 
-#define LOOPS_PER_USEC  80
-
-/* Trivial udelay implementation based on cpu_speed */
+/* Trivial udelay implementation based on timer 1 */
 static inline int udelay(int u)
 {
-	int ret;
+	u32 count = timer_read();
 
-	asm volatile ("0:\tsubs %0,%0,#1\n\tbpl 0b\n"
-		      : "=r" (ret) : "0" (u * LOOPS_PER_USEC) );
-	return ret;
+	while (count_to_usec(timer_read() - count) < 1000)
+		/* wait */;
+	return 0;
 }
 
 static inline void mdelay(int m)
