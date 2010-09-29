@@ -42,7 +42,23 @@ int nop(int nloop)
 	nloop = (nloop + 128) / 256;
 	count = timer_read();
 	for (i = 0; i < nloop; i++)
-	    asm volatile(".rep 256\n\tnop\n.endr");
+		asm volatile(".rep 256\n\tnop\n.endr");
+	count = timer_read() - count;
+	return count_to_usec(count);
+}
+
+/* Run memory access for nloop times, return usecs */
+int mw(int nloop, void *addr)
+{
+	u32 count;
+	int i;
+
+	nloop = (nloop + 128) / 256;
+	count = timer_read();
+	for (i = 0; i < nloop; i++)
+		asm volatile(".rep 16\n\t"
+			     "stm %0, {r0-r15}\n\t"
+			     ".endr" : /* no output */ : "r" (addr));
 	count = timer_read() - count;
 	return count_to_usec(count);
 }
