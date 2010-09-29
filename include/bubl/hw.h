@@ -2,54 +2,61 @@
 #define __BUBL_HW_H__
 #include <bubl/types.h>
 /*
- * Mostly form device.h by Sandeep Paulraj
- * found in the dm3xx_sd_boot-6.1 package.
- * Partly reordered and cleaned up from crappy "corporate-style" code.
+ * Was mostly form device.h by Sandeep Paulraj, in dm3xx_sd_boot-6.1 package.
+ * Now rewritten and cleaned up
  */
+
+enum pll_regs {
+	PLL_PID,
+	/* unused ... */
+
+	PLL_RSTYPE = (0xe4 / 4),
+	/* more unused */
+
+	PLL_PLLCTL = (0x100 / 4),
+	PLL_OCSEL,
+	PLL_SECCTL,
+	PLL_UNUSED_10c,
+
+	PLL_PLLM,	/* 0x110 */
+	PLL_PREDIV,
+	PLL_PLLDIV1,
+	PLL_PLLDIV2,
+
+	PLL_PLLDIV3,	/* 0x120 */
+	PLL_OSCDIV1,
+	PLL_POSTDIV,
+	PLL_BPDIV,
+
+	PLL_UNUSED_130,	/* 0x130 */
+	PLL_UNUSED_134,
+	PLL_PLLCMD,
+	PLL_PLLSTAT,
+
+	PLL_ALNCTL,	/* 0x140 */
+	PLL_DCHANGE,
+	PLL_CKEN,
+	PLL_CKSTAT,
+
+	PLL_SYSTAT,	/* 0x150 */
+
+	PLL_PLLDIV4 = (0x160 / 4),
+	PLL_PLLDIV5,
+	PLL_PLLDIV6,
+	PLL_PLLDIV7,
+	PLL_PLLDIV8,
+	PLL_PLLDIV9
+};
+
+#define pll1_base ((volatile u32 *)0x01C40800)
+#define pll2_base ((volatile u32 *)0x01C40C00)
+
+
 
 /* crap crap crap */
 typedef volatile u32	VUint32;
 typedef volatile u8	VUint8;
 
-
-typedef struct _DEVICE_PLL_REGS_
-{
-  VUint32 PID;                  //0x00
-  VUint8 RSVD0[224];    //0x04
-  VUint32 RSTYPE;               //0xe4
-  VUint8 RSVD1[24];     //0xe8
-  VUint32 PLLCTL;               //0x100
-  VUint8 RSVD2[4];      //0x104
-  VUint32 SECCTL;               //0x108
-  VUint32 RV;                   //0x10c
-  VUint32 PLLM;                 //0x110
-  VUint32 PREDIV;               //0x114
-  VUint32 PLLDIV1;              //0x118
-  VUint32 PLLDIV2;              //0x11c
-  VUint32 PLLDIV3;      //0x120
-  VUint32 OSCDIV1;              //0x124
-  VUint32 POSTDIV;              //0x128
-  VUint32 BPDIV;                //0x12c
-  VUint8 RSVD5[8];      //0x130
-  VUint32 PLLCMD;               //0x138
-  VUint32 PLLSTAT;              //0x13c
-  VUint32 ALNCTL;               //0x140
-  VUint32 DCHANGE;              //0x144
-  VUint32 CKEN;                 //0x148
-  VUint32 CKSTAT;               //0x14c
-  VUint32 SYSTAT;               //0x150
-  VUint8 RSVD6[12];             //0x154
-  VUint32 PLLDIV4;              //0x160
-  VUint32 PLLDIV5;              //0x164
-  VUint32 PLLDIV6;              //0x168
-  VUint32 PLLDIV7;              //0x16C
-  VUint32 PLLDIV8;              //0x170
-  VUint32 PLLDIV9;              //0x174
-}
-DEVICE_PLLRegs;
-
-#define PLL1 ((DEVICE_PLLRegs*) 0x01C40800)
-#define PLL2 ((DEVICE_PLLRegs*) 0x01C40C00)
 
 // System Control Module register structure for DM365
 typedef struct _DEVICE_SYS_MODULE_REGS_

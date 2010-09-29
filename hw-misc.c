@@ -39,7 +39,7 @@ static void VPSS_SYNC_RESET(void)
 
 static void POR_RESET(void)
 {
-	if ((PLL1->RSTYPE)&3) {
+	if (pll1_base[PLL_RSTYPE] & 3) {
 		VPSS_SYNC_RESET();  // VPSS sync reset
 		*GPINT_GPEN = 0x00020000;
 		*GPTDAT_GPDIR = 0x00020002;
