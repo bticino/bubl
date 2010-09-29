@@ -37,6 +37,7 @@ void bubl_main(void)
 
 	misc_setup0();
 	timer_setup();
+	pll_bypass();
 
 	/* read ADC values, to identify machine types */
 	adc_setup();
