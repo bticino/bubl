@@ -20,4 +20,4 @@ static inline void mdelay(int m)
 }
 
 
-#endif /* __SSW_DELAY_H__ */
+#endif /* __BUBL_DELAY_H__ */
