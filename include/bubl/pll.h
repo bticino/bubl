@@ -47,7 +47,25 @@ enum pll_regs {
 #define pll1_base ((volatile u32 *)0x01C40800)
 #define pll2_base ((volatile u32 *)0x01C40C00)
 
-struct pll_config; /* FIXME: define this... */
+/* The following structures describe the pll config */
+struct pll_postdivs {
+	u32 addr;
+	u32 value;
+};
+
+struct pll_config_one {
+	u32 prediv;
+	u32 postdiv;
+	u32 pllm;
+	struct pll_postdivs *divs;
+	int ndivs;
+};
+
+struct pll_config {
+	struct pll_config_one pll1;
+	struct pll_config_one pll2;
+	u32 clkctrl;
+};
 
 extern int pll_bypass(void);
 extern int pll_setup(struct pll_config *cfg);
