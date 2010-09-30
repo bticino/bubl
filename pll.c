@@ -1,5 +1,7 @@
 #include <bubl/types.h>
+#include <bubl/tools.h>
 #include <bubl/pll.h>
+#include <bubl/delay.h>
 #include <bubl/hw.h>
 /*
  * PLL setup for DM365. Originally from "device.c", by Sandeep Paulraj,
@@ -17,146 +19,133 @@ int pll_bypass(void) /* This function added by ARub, as jtag has no reset */
 	return 0;
 }
 
-static int pll1_setup(void)
+/*
+ * The two plls are the same hardware cell, so factorize code where possible
+ */
+
+static void __pll_reset1(volatile u32 *base)
 {
-	unsigned int CLKSRC=0x0;
-
-	/*Power up the PLL*/
-	pll1_base[PLL_PLLCTL] &= 0xFFFFFFFD;
-
-	pll1_base[PLL_PLLCTL] &= 0xFFFFFEFF;
-	pll1_base[PLL_PLLCTL] |= CLKSRC<<8;
-
-	/*Set PLLENSRC '0', PLL Enable(PLLEN)  controlled through MMR*/
-	pll1_base[PLL_PLLCTL] &= 0xFFFFFFDF;
-
-	/*Set PLLEN=0 => PLL BYPASS MODE*/
-	pll1_base[PLL_PLLCTL] &= 0xFFFFFFFE;
-
-	trivial_loop(150);
-
-	// PLLRST=1(reset assert)
-	pll1_base[PLL_PLLCTL] |= 0x00000008;
-
-	trivial_loop(300);
-
-	/*Bring PLL out of Reset*/
-	pll1_base[PLL_PLLCTL] &= 0xFFFFFFF7;
-
-	//Program the Multiper and Pre-Divider for PLL1
-	pll1_base[PLL_PLLM]   =   0x51;   // VCO will 24*2M/N+1 = 486Mhz
-	pll1_base[PLL_PREDIV] =   0x8000|0x7;
-
-	// Assert TENABLE = 1, TENABLEDIV = 1, TINITZ = 1
-	pll1_base[PLL_SECCTL] = 0x00470000;
-
-	// Assert TENABLE = 1, TENABLEDIV = 1, TINITZ = 0
-	pll1_base[PLL_SECCTL] = 0x00460000;
-
-	// Assert TENABLE = 0, TENABLEDIV = 0, TINITZ = 0
-	pll1_base[PLL_SECCTL] = 0x00400000;
-
-	// Assert TENABLE = 0, TENABLEDIV = 0, TINITZ = 1
-	pll1_base[PLL_SECCTL] = 0x00410000;
-
-	//Program the PostDiv for PLL1
-	pll1_base[PLL_POSTDIV] = 0x8000;
-
-	// Post divider setting for PLL1
-	pll1_base[PLL_PLLDIV2] = 0x8001;
-	pll1_base[PLL_PLLDIV3] = 0x8001;   // POST DIV 486/2  -> MJCP/HDVICP
-	pll1_base[PLL_PLLDIV4] = 0x8003;   // POST DIV 486/4  -> EDMA/EDMA CFG
-	pll1_base[PLL_PLLDIV5] = 0x8001;   // POST DIV 486/2 -> VPSS
-	pll1_base[PLL_PLLDIV6] = 0x8011;   // 27Mhz POST DIV 486/18  -> VENC
-        pll1_base[PLL_PLLDIV7] = 0x8000;   // POST DIV 486/2 -> DDR
-	pll1_base[PLL_PLLDIV8] = 0x8003;   // POST DIV 486/4 -> MMC0/SD0
-	pll1_base[PLL_PLLDIV9] = 0x8001;   // POST DIV 486/2 -> CLKOUT
-
-	trivial_loop(300);
-
-	/*Set the GOSET bit */
-	pll1_base[PLL_PLLCMD] = 0x00000001;  // Go
-
-	trivial_loop(300);
-
-	/*Wait for PLL to LOCK */
-	while(! (((SYSTEM->PLL0_CONFIG) & 0x07000000) == 0x07000000))
-		;
-
-        /*Enable the PLL Bit of PLLCTL*/
-	pll1_base[PLL_PLLCTL] |= 0x00000001;   // PLLEN=0
-
-	return 0;
+	base[PLL_PLLCTL] &= ~(1 << 1); /* not power down */
+	/* Note: original code cleared bit 8 in PLLCTL, but it's unused */
+	base[PLL_PLLCTL] &= ~(1 << 5);	/* enable PLLEN as source */
+	base[PLL_PLLCTL] &= ~(1 << 0);	/* and then PLLEN itself -> bypass */
+	udelay(2); 			/* "4 reference clock cycles" */
+	base[PLL_PLLCTL] |=  (1 << 3);	/* Reset */
+	udelay(10);			/* "at least 5 microseconds" */
+	base[PLL_PLLCTL] &= ~(1 << 3);	/* Out of reset */
 }
 
-static int pll2_setup(void)
+static void __pll_sequence(volatile u32 *base)
 {
-	unsigned int CLKSRC=0x0;
-	/*Power up the PLL*/
-	pll2_base[PLL_PLLCTL] &= 0xFFFFFFFD;
-
-	/*Select the Clock Mode as Onchip Oscilator or External Clock */
-	/*VDB has input on MXI pin */
-
-	pll2_base[PLL_PLLCTL] &= 0xFFFFFEFF;
-	pll2_base[PLL_PLLCTL] |= CLKSRC<<8;
-
-	/*Set PLLENSRC '0', PLL Enable(PLLEN)  is controlled through MMR*/
-	pll2_base[PLL_PLLCTL] &= 0xFFFFFFDF;
-
-	/*Set PLLEN=0 => PLL BYPASS MODE*/
-	pll2_base[PLL_PLLCTL] &= 0xFFFFFFFE;
-
-	trivial_loop(50);
-
-	// PLLRST=1(reset assert)
-	pll2_base[PLL_PLLCTL] |= 0x00000008;
-
-	trivial_loop(300);
-
-	/*Bring PLL out of Reset*/
-	pll2_base[PLL_PLLCTL] &= 0xFFFFFFF7;
-
-	//Program the Multiper and Pre-Divider for PLL2
-	pll2_base[PLL_PLLM]   =   0x63;   // VCO will 24*2M/N+1 = 594Mhz
-	pll2_base[PLL_PREDIV] =   0x8000|0x7;
-
-	pll2_base[PLL_POSTDIV] = 0x8000;
-
-	pll2_base[PLL_SECCTL] = 0x00470000;   // TENABLE = 1, TENABLEDIV = 1, TINITZ = 1
-	pll2_base[PLL_SECCTL] = 0x00460000;   // TENABLE = 1, TENABLEDIV = 1, TINITZ = 0
-	pll2_base[PLL_SECCTL] = 0x00400000;   // TENABLE = 0, TENABLEDIV = 0, TINITZ = 0
-	pll2_base[PLL_SECCTL] = 0x00410000;   // TENABLE = 0, TENABLEDIV = 0, TINITZ = 1
-
-	// Post divider setting for PLL2
-
-	pll2_base[PLL_PLLDIV2] = 0x8001;   // 594/2 =297 Mhz -> ARM
-	pll2_base[PLL_PLLDIV4] = 0x801C;   // POST DIV 594/29 = 20.48 -> VOICE
-	pll2_base[PLL_PLLDIV5] = 0x8007;   // POST DIV 594/8 = 74.25 ->VIDEO HD
-
-	//GoCmd for PostDivider to take effect
-	pll2_base[PLL_PLLCMD] = 0x00000001;
-	trivial_loop(150);
-
-	/*Wait for PLL to LOCK */
-	while(! (((SYSTEM->PLL1_CONFIG) & 0x07000000) == 0x07000000))
-		;
-
-	trivial_loop(4100);
-
-	//Enable the PLL2
-	pll2_base[PLL_PLLCTL] |= 0x00000001;   // PLLEN=0
-
-	//do this after PLL's have been set up
-	SYSTEM->PERI_CLKCTRL = 0x243F04FC;
-
-	return 0;
-
+	/*
+	 * This is the sequence to enable the new mult and div values
+	 * The manual has TENABLE, TENABLEDIV, TINITZ in this order,
+	 * but bits are TENABLEDIV (18), TENABLE (17), TINITZ (16).
+	 */
+						  /* ENABLE ENABLEDIV INITZ */
+	base[PLL_SECCTL] = (1 << 22) | (7 << 16); /*  1        1        1   */
+	base[PLL_SECCTL] = (1 << 22) | (6 << 16); /*  1        1        0   */
+	base[PLL_SECCTL] = (1 << 22) | (0 << 16); /*  0        0        0   */
+	base[PLL_SECCTL] = (1 << 22) | (1 << 16); /*  1        1        1   */
 }
+
+static void __pll_wait_lock(volatile u32 *base)
+{
+	/* This is in the system controller, unfortunately */
+	volatile u32 *addr;
+
+	if (base == pll1_base)
+		addr = &SYSTEM->PLL0_CONFIG;
+	else
+		addr = &SYSTEM->PLL1_CONFIG;
+
+	while ( (*addr & (7 << 24)) != (7 << 24))
+		;
+}
+
+
+static void __pll_setup_one(volatile u32 *base, struct pll_config_one *cfg)
+{
+	struct pll_postdivs *div;
+	int i;
+
+	__pll_reset1(base);
+
+	base[PLL_PLLM] = cfg->pllm;
+	/* Note: b15 undocumented: was in original code, keep for symmetry */
+	base[PLL_PREDIV] = cfg->prediv | (1 << 15);
+	/* b15 is the enable bit */
+	base[PLL_POSTDIV] = cfg->postdiv | (1 << 15);
+
+	__pll_sequence(base);
+
+	/* Individual dividers */
+	for (i = 0, div = cfg->divs; i < cfg->ndivs; i++, div++)
+		base[div->addr] = (1 << 15) | div->value;
+
+	trivial_loop(300); /* FIXME */
+
+	/* Write the align register: all of them, but tell pll1 from pll2 */
+	if (cfg->ndivs > 4)
+		i = 0x1ff; /* pll1 */
+	else
+		i = 0x00f; /* pll2 */
+	base[PLL_ALNCTL] = i;
+
+	base[PLL_PLLCMD] = 0x00000001;  /* GOSET */
+	while (base[PLL_PLLSTAT] & 1)
+		/* wait for gostat to clear */;
+
+	/* Wait fot the PLL to lock (FIXME: should it be _before_ the go? */
+	__pll_wait_lock(base);
+
+	/* enable it */
+	base[PLL_PLLCTL] |= (1 << 0);
+}
+
+/* Temporarily, use static configurations */
+
+struct pll_postdivs __pll1_divs[] = {
+	{ PLL_PLLDIV2,  1},
+	{ PLL_PLLDIV3,  1},
+	{ PLL_PLLDIV4,  3},
+	{ PLL_PLLDIV5,  1},
+	{ PLL_PLLDIV6, 17},
+	{ PLL_PLLDIV7,  0},
+	{ PLL_PLLDIV8,  3},
+	{ PLL_PLLDIV9,  1},
+};
+
+struct pll_postdivs __pll2_divs[] = {
+	{ PLL_PLLDIV2,  1},
+	{ PLL_PLLDIV4, 28},
+	{ PLL_PLLDIV5,  7},
+};
+
+struct pll_config_one __cfg_pll1 = {
+	.pllm =		0x51,
+	.prediv =	0x07,
+	.postdiv =	0x00,
+	.divs =		__pll1_divs,
+	.ndivs =	ARRAY_SIZE(__pll1_divs)
+};
+
+struct pll_config_one __cfg_pll2 = {
+	.pllm =		0x63,
+	.prediv =	0x07,
+	.postdiv =	0x00,
+	.divs =		__pll2_divs,
+	.ndivs =	ARRAY_SIZE(__pll2_divs)
+};
+
 
 int pll_setup(struct pll_config *cfg)
 {
-    pll1_setup();
-    pll2_setup();
-    return 0;
+	__pll_setup_one(pll1_base, &__cfg_pll1);
+	__pll_setup_one(pll2_base, &__cfg_pll2);
+
+	//do this after PLL's have been set up
+	SYSTEM->PERI_CLKCTRL = 0x243F04FC;
+	return 0;
 }
+
