@@ -103,49 +103,13 @@ static void __pll_setup_one(volatile u32 *base, struct pll_config_one *cfg)
 	base[PLL_PLLCTL] |= (1 << 0);
 }
 
-/* Temporarily, use static configurations */
-
-struct pll_postdivs __pll1_divs[] = {
-	{ PLL_PLLDIV2,  1},
-	{ PLL_PLLDIV3,  1},
-	{ PLL_PLLDIV4,  3},
-	{ PLL_PLLDIV5,  1},
-	{ PLL_PLLDIV6, 17},
-	{ PLL_PLLDIV7,  0},
-	{ PLL_PLLDIV8,  3},
-	{ PLL_PLLDIV9,  1},
-};
-
-struct pll_postdivs __pll2_divs[] = {
-	{ PLL_PLLDIV2,  1},
-	{ PLL_PLLDIV4, 28},
-	{ PLL_PLLDIV5,  7},
-};
-
-struct pll_config_one __cfg_pll1 = {
-	.pllm =		0x51,
-	.prediv =	0x07,
-	.postdiv =	0x00,
-	.divs =		__pll1_divs,
-	.ndivs =	ARRAY_SIZE(__pll1_divs)
-};
-
-struct pll_config_one __cfg_pll2 = {
-	.pllm =		0x63,
-	.prediv =	0x07,
-	.postdiv =	0x00,
-	.divs =		__pll2_divs,
-	.ndivs =	ARRAY_SIZE(__pll2_divs)
-};
-
-
 int pll_setup(struct pll_config *cfg)
 {
-	__pll_setup_one(pll1_base, &__cfg_pll1);
-	__pll_setup_one(pll2_base, &__cfg_pll2);
+	__pll_setup_one(pll1_base, &cfg->pll1);
+	__pll_setup_one(pll2_base, &cfg->pll2);
 
 	//do this after PLL's have been set up
-	SYSTEM->PERI_CLKCTRL = 0x243F04FC;
+	SYSTEM->PERI_CLKCTRL = cfg->clkctrl;
 	return 0;
 }
 
