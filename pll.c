@@ -1,9 +1,9 @@
 #include <bubl/types.h>
+#include <bubl/pll.h>
 #include <bubl/hw.h>
 /*
- * PLL setup for DM365. Mainly from "device.c", by Sandeep Paulraj,
- * found in the dm3xx_sd_boot-6.1 package.
- * Partly reordered and cleaned up from crappy "corporate-style" code.
+ * PLL setup for DM365. Originally from "device.c", by Sandeep Paulraj,
+ * found in the dm3xx_sd_boot-6.1 package. Now rewritten and cleaned up.
  */
 
 int pll_bypass(void) /* This function added by ARub, as jtag has no reset */

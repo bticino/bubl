@@ -1,4 +1,5 @@
 #include <bubl/io.h>
+#include <bubl/pll.h>
 #include <bubl/hw.h>
 #include <bubl/hw-misc.h>
 #include <bubl/tools.h>
