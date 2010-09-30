@@ -47,8 +47,9 @@ enum pll_regs {
 #define pll1_base ((volatile u32 *)0x01C40800)
 #define pll2_base ((volatile u32 *)0x01C40C00)
 
+struct pll_config; /* FIXME: define this... */
+
 extern int pll_bypass(void);
-extern int pll1_setup(void);
-extern int pll2_setup(void);
+extern int pll_setup(struct pll_config *cfg);
 
 #endif /* __BUBL_PLL_H__ */

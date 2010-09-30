@@ -10,6 +10,8 @@
 
 #include <mmcsd.h>
 
+#include "board.h" /* board selection using ADC values */
+
 static unsigned ram_test(int base)
 {
 	u32 *bptr = (u32 *)base;
@@ -35,6 +37,7 @@ void bubl_main(void)
 	unsigned ramsize;
 	int usec1, usec2;
 	int i, adcvals[6];
+	struct pll_config *cfg;
 
 	misc_setup0();
 	timer_setup();
@@ -44,11 +47,12 @@ void bubl_main(void)
 	adc_setup();
 	for (i = 0; i < 6; i++)
 		adcvals[i] = adc_read(i);
+	cfg = board_get_config(adcvals);
 
 	usec1 = nop(1000*1000);
-	pll1_setup();
-	pll2_setup();
+	pll_setup(cfg);
 	usec2 = nop(1000*1000);
+
 	ddr_setup();
 	misc_setup1();
 	serial_setup();

@@ -17,7 +17,7 @@ int pll_bypass(void) /* This function added by ARub, as jtag has no reset */
 	return 0;
 }
 
-int pll1_setup(void)
+static int pll1_setup(void)
 {
 	unsigned int CLKSRC=0x0;
 
@@ -89,7 +89,7 @@ int pll1_setup(void)
 	return 0;
 }
 
-int pll2_setup(void)
+static int pll2_setup(void)
 {
 	unsigned int CLKSRC=0x0;
 	/*Power up the PLL*/
@@ -154,3 +154,9 @@ int pll2_setup(void)
 
 }
 
+int pll_setup(struct pll_config *cfg)
+{
+    pll1_setup();
+    pll2_setup();
+    return 0;
+}
