@@ -111,8 +111,11 @@ void __attribute__((noreturn, noinline)) bubl_work(void)
 			printk(".");
 	}
 
-	/* If we have serial data or u-boot is not really there, use srecord */
-	if (testc() || ((u32 *)ub_addr)[0xf] != 0xdeadbeef)
+	/* If  u-boot is not really there, use srecord */
+	if (((u32 *)ub_addr)[0xf] != 0xdeadbeef)
+		do_srecord();
+	/* If we have serial input, and it is 's', use srecord */
+	if (testc() && getc() == 's')
 		do_srecord();
 
 	/* jump to u-boot */
