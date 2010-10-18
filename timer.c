@@ -10,14 +10,17 @@
 
 void timer_setup(void)
 {
+	/* First of all, reset the timer */
+	timer_base[TIM_TGCR] = 0;
+
 	timer_base[TIM_EMUMGT] = 1; /* Free running */
 	timer_base[TIM_TCR] = (2 << 22); /* Continuous 34 */
 	timer_base[TIM_PRD12] = ~0;
 	timer_base[TIM_PRD34] = ~0; /* FIXME */
 	timer_base[TIM_TGCR] = 0
-		| (3 << 8) /* prescaler34: 24MHz -> 8MHz */
+		| (2 << 8) /* prescaler34: 24MHz -> 8MHz */
 		| (1 << 4) /* new features? */
-		| (1 << 2) /* duea 32 bit unchained */
+		| (1 << 2) /* dual 32 bit unchained */
 		| 3; /* both out of reset; */
 }
 
