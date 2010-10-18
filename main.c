@@ -71,6 +71,10 @@ void bubl_main(void)
 	printk("RAM: 0x%08x bytes (%i KiB, %i MiB)\n",
 	       ramsize, ramsize >> 10, ramsize >> 20);
 
+	/* Check the RAM speed */
+	usec1 = mw(1000*1000, RAMADDR);
+	printk("RAM speed: 1M writes in %i usec\n", usec1);
+
 	/* Now move the stack pointer to RAM */
 	asm("sub sp, %0, #16" : : "r" (RAMADDR + ramsize) : "memory");
 	bubl_work();
