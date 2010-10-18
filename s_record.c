@@ -21,13 +21,12 @@
  * MA 02111-1307 USA
  */
 
-#include <common.h>
 #include <s_record.h>
 
 static int hex1_bin (char  c);
 static int hex2_bin (char *s);
 
-int srec_decode (char *input, int *count, ulong *addr, char *data)
+int srec_decode (char *input, int *count, unsigned long *addr, char *data)
 {
 	int	i;
 	int	v;				/* conversion buffer	*/

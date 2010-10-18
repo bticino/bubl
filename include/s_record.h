@@ -111,4 +111,4 @@
 #define SREC_MAXRECLEN	(512 + 4)   /* max ASCII record length		    */
 #define SREC_MAXBINLEN	255	    /* resulting binary length		    */
 
-int srec_decode (char *input, int *count, ulong *addr, char *data);
+int srec_decode (char *input, int *count, unsigned long *addr, char *data);
