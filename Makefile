@@ -28,6 +28,7 @@ all: $(ALL)
 # objects that make the program
 obj-s := boot.o 
 obj-c += header.o pll.o hw-misc.o serial.o ddr.o timer.o adc.o board.o main.o
+obj-c += s_record.o
 obj-c += lib/ctype.o lib/string.o
 obj-c += lib/sprintf.o lib/strtol.o lib/printk.o lib/vsprintf.o
 obj-c += mmc/mmcsd_evm.o mmc/mmcsd_protocol.o mmc/mmc_glue.o
