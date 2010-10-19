@@ -27,3 +27,9 @@ int sdcard_init(void)
 	printk("%s: success (%cC)\n", __func__, cfg.ishc ? 'H' : 'S');
 	return 0;
 }
+
+int sdcard_read_block(int blknr, unsigned long addr)
+{
+    /* first arg limited to 4GB, last argument "endian" is not used */
+    return MMCSD_singleBlkRead(blknr << 9, (void *)addr, 512, 0);
+}

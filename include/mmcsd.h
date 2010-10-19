@@ -12,6 +12,7 @@
 
 /* These initial functions are in mmc_glue.c */
 extern int sdcard_init(void);
+extern int sdcard_read_block(int blknr, unsigned long addr);
 
 /* crap crap crap */
 typedef u32    Uint32;

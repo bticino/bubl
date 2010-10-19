@@ -86,15 +86,15 @@ void bubl_main(void)
 void __attribute__((noreturn, noinline)) bubl_work(void)
 {
 	unsigned long addr;
-	unsigned long offset = 4096;
+	unsigned long blknr = 4096 / 512; /* start at 4kB within the card */
 
 	/*
-	 * Read u-boot to address 0x81080000 from offset 4kB.
+	 * Read u-boot to address 0x81080000
 	 * Size loaded is 256k
 	 */
 	const unsigned long ub_addr = 0x81080000;
 	const unsigned long ub_size = 1024 * 256;
-	const unsigned long step = 512; /* can't be more than 512 */
+	const unsigned long blksize = 512;
 
 	/* make the memory area dirty, to be sure it works */
 	memset((void *)ub_addr, 0xca, ub_size);
@@ -104,10 +104,9 @@ void __attribute__((noreturn, noinline)) bubl_work(void)
 		printk("Loading u-boot ");
 		for (addr = ub_addr;
 		     addr < ub_addr + ub_size;
-		     addr += step, offset += step) {
-			/* last argument "endian" is not used */
-			MMCSD_singleBlkRead(offset, (void *)addr, step, 0);
-			if ((offset & 0x1fff) == 0)
+		     addr += blksize, blknr++) {
+			sdcard_read_block(blknr, addr);
+			if ((blknr & 0xf) == 0)
 				printk(".");
 		}
 	}
