@@ -173,9 +173,11 @@ Uint16 MMCSD_singleBlkRead( Uint32 cardMemAddr, Uint32 *dest,
 //        if ( mmcsdCSDRegInfo.readBlkPartial != 1 )
 //            return E_INVALID_INPUT;
 
+#if 0 /* for HC cards, the argument is a block number, not a byte offset */
 	if ( cardMemAddr & 0x1FF )
 		if ( mmcsdCSDRegInfo.readBlkMisalign != 1 )
 			return E_INVALID_INPUT;
+#endif
 
 	if ( MMCSD_sendCmd( MMCSD_SET_BLOCKLEN, blklength, 0,
 			    MMCSD_STAT0_RSPDNE ) )

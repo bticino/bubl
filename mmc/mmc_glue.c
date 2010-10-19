@@ -30,6 +30,10 @@ int sdcard_init(void)
 
 int sdcard_read_block(int blknr, unsigned long addr)
 {
-    /* first arg limited to 4GB, last argument "endian" is not used */
-    return MMCSD_singleBlkRead(blknr << 9, (void *)addr, 512, 0);
+	if (!cfg.ishc) {
+		/* first arg limited to 4GB, last argument is not used */
+		return MMCSD_singleBlkRead(blknr << 9, (void *)addr, 512, 0);
+	}
+	/* HC: first arg is a block number, last argument is not used */
+	return MMCSD_singleBlkRead(blknr, (void *)addr, 512, 0);
 }
