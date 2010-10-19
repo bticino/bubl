@@ -100,15 +100,16 @@ void __attribute__((noreturn, noinline)) bubl_work(void)
 	memset((void *)ub_addr, 0xca, ub_size);
 
 
-	sdcard_init();
-	printk("Loading u-boot ");
-	for (addr = ub_addr;
-	     addr < ub_addr + ub_size;
-	     addr += step, offset += step) {
-		/* last argument "endian" is not used */
-		MMCSD_singleBlkRead(offset, (void *)addr, step, 0);
-		if ((offset & 0x1fff) == 0)
-			printk(".");
+	if (!sdcard_init()) {
+		printk("Loading u-boot ");
+		for (addr = ub_addr;
+		     addr < ub_addr + ub_size;
+		     addr += step, offset += step) {
+			/* last argument "endian" is not used */
+			MMCSD_singleBlkRead(offset, (void *)addr, step, 0);
+			if ((offset & 0x1fff) == 0)
+				printk(".");
+		}
 	}
 
 	/* If  u-boot is not really there, use srecord */
