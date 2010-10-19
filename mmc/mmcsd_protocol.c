@@ -278,7 +278,7 @@ Uint16 MMC_sendOpCond( Uint32 voltageWindow, Uint32 opTimeOut )
 /*
  *  Send command to check if Voltage Cond of the SD, match that of the host
  */
-Uint16 SD_sendOpCond( Uint32 voltageWindow, Uint32 opTimeOut )
+Uint16 SD_sendOpCond( Uint32 voltageWindow, Uint32 opTimeOut, int *hccard )
 {
 	Uint16 status;
 
@@ -289,8 +289,13 @@ Uint16 SD_sendOpCond( Uint32 voltageWindow, Uint32 opTimeOut )
 					     MMCSD_STAT0_RSPDNE )) )
 			return status;
 
-		if ( MMCSD_MMCRSP67 & 0x80000000 )
+		if ( MMCSD_MMCRSP67 & 0x80000000 ) {
+			if (MMCSD_MMCRSP67 & (1 << 30))
+				*hccard = 1;
+			else
+				*hccard = 0;
 			return 0;
+		}
 
 		/* Send CMD55 with RCA = 0 for the next iteration */
 		if ( (status = MMCSD_appCmd( 0 )) )
@@ -367,6 +372,9 @@ Uint16 MMCSD_cardIdentification( MMCSD_ConfigData* config, Uint32* rca,
 		return status;
 	}
 
+	/* It is mandatory to send CMD8 first, for HC cards -- ignore reply*/
+	MMCSD_sendCmd( MMCSD_SEND_IF_COND, 0x1aa, 0, 0);
+
 	/* Send the operating Voltage Range */
  RESEND_CMD41:
 	if (!retry--) {
@@ -384,7 +392,8 @@ Uint16 MMCSD_cardIdentification( MMCSD_ConfigData* config, Uint32* rca,
 	else
 	{
 		// Experimenting with the whole supported voltage range
-		if ( SD_sendOpCond( 0x00ff8000, opTimeout ) )
+		if ( SD_sendOpCond( 0x00ff8000 | (1 << 30) /* bit 30: HC */,
+				    opTimeout, &config->ishc ) )
 			goto RESEND_CMD41;
 		mmc = 0;
 	}

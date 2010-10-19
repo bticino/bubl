@@ -10,6 +10,7 @@ MMCSD_ConfigData cfg = {
 	.busWidth = MMCSD_DATA_BUS_4,
 	.timeoutResponse = 0xFF,
 	.timeoutRead = 0xFFFF,
+	.ishc = 0,
 };
 
 /* This is partly from sdcard_flash.c, by Constantine Shulyupin, GNU GPL */
@@ -23,6 +24,6 @@ int sdcard_init(void)
 		printk("SD Card Initialization failed\n");
 		return -1;
 	}
-	printk("%s: success\n", __func__);
+	printk("%s: success (%cC)\n", __func__, cfg.ishc ? 'H' : 'S');
 	return 0;
 }

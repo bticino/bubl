@@ -171,6 +171,7 @@ typedef struct {
                                 // for SPI mode timeout value is equal to this
                                 // value multiplied by 8 MMC CLK clock cycles
     Uint16 fifoThreshold;       // To set the FIFO depth 16bytes or 32 bytes
+    int ishc; /* set by identification protocol */
 } MMCSD_ConfigData;
 
 /*
@@ -246,6 +247,7 @@ Uint16 MMCSD_writeNWords    ( Uint32* data, Uint32 numofBytes,
 #define MMCSD_RSP4              MMCSD_RSP1
 #define MMCSD_RSP5              MMCSD_RSP1
 #define MMCSD_RSP6              MMCSD_RSP1
+#define MMCSD_RSP7              MMCSD_RSP1
 
 /* Commands and their responses */
 /* MMC and SD */
@@ -253,6 +255,7 @@ Uint16 MMCSD_writeNWords    ( Uint32* data, Uint32 numofBytes,
 #define MMCSD_ALL_SEND_CID          ( 2 | MMCSD_RSP2 )
 #define MMCSD_SELECT_CARD           ( 7 | MMCSD_RSP1 )
 #define MMCSD_DESELECT_CARD         ( 7 )
+#define MMCSD_SEND_IF_COND          ( 8 | MMCSD_RSP7 )
 #define MMCSD_SEND_CSD              ( 9 | MMCSD_RSP2 )
 #define MMCSD_SEND_CID              ( 10 | MMCSD_RSP2 )
 #define MMCSD_SEND_STATUS           ( 13 | MMCSD_RSP1 )
