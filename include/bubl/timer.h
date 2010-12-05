@@ -34,5 +34,6 @@ extern void timer_setup(void);
 extern u32 timer_read(void);
 extern u32 count_to_usec(u32 count);
 extern int nop(int nloop);
+extern int mw(int nloop, void *addr);
 
 #endif /* __BUBL_TIMER_H__ */
