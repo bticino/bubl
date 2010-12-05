@@ -49,7 +49,7 @@ $(SREC): $(ELF)
 clean:
 	rm -f $(ALL) $(obj-y) *~ */*~ include/*/*~ $(MAP) .depend
 
-include .depend
+-include .depend
 
 .depend: $(obj-s:.o=.S) $(obj-c:.o=.c)
 	$(CC) $(CFLAGS) -M $^ > $@
