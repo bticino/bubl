@@ -32,6 +32,11 @@ obj-c += s_record.o
 obj-c += lib/ctype.o lib/string.o
 obj-c += lib/sprintf.o lib/strtol.o lib/printk.o lib/vsprintf.o
 obj-c += mmc/mmcsd_evm.o mmc/mmcsd_protocol.o mmc/mmc_glue.o
+
+# we have some division
+obj-s += libgcc/_udivsi3.o libgcc/_divsi3.o
+obj-c += libgcc/div0.o
+
 obj-y := $(obj-s) $(obj-c)
 
 # main rule
