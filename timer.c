@@ -36,6 +36,26 @@ u32 count_to_usec(u32 count)
 	return count / 8;
 }
 
+/* This get_jiffies is used by Linux code. Use 1kHZ fake rate */
+unsigned long get_jiffies(void)
+{
+	static unsigned long prevj;
+	static u32 prevcount;
+	static int rest_usec;
+
+	u32 count;
+	int usec;
+
+	/* This is all approximated, who cares */
+	count = timer_read();
+	usec = count_to_usec(count - prevcount);
+	prevcount = count;
+	rest_usec += usec;
+	prevj += rest_usec / USECS_PER_JIFFY;
+	rest_usec %= USECS_PER_JIFFY;
+	return prevj;
+}
+
 /* Run nop operation for nloop times, return usecs */
 int nop(int nloop)
 {

@@ -36,4 +36,12 @@ extern u32 count_to_usec(u32 count);
 extern int nop(int nloop);
 extern int mw(int nloop, void *addr);
 
+/* We simulate jiffies */
+extern unsigned long get_jiffies(void);
+#define jiffies get_jiffies()
+
+#define HZ 1000
+#define USECS_PER_JIFFY (1000*1000 / HZ)
+#define msecs_to_jiffies(msec) ((msec) * HZ / 1000)
+
 #endif /* __BUBL_TIMER_H__ */
