@@ -385,7 +385,6 @@ int davinci_mmc_init(bd_t *bis, struct davinci_mmc *host)
 	struct mmc *mmc;
 
 	if (0) {
-		extern void *malloc(int);
 		/* u-boot code */
 		mmc = malloc(sizeof(struct mmc));
 		memset(mmc, 0, sizeof(struct mmc));
