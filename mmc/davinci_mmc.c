@@ -384,9 +384,16 @@ int davinci_mmc_init(bd_t *bis, struct davinci_mmc *host)
 {
 	struct mmc *mmc;
 
-	mmc = malloc(sizeof(struct mmc));
-	memset(mmc, 0, sizeof(struct mmc));
-
+	if (0) {
+		extern void *malloc(int);
+		/* u-boot code */
+		mmc = malloc(sizeof(struct mmc));
+		memset(mmc, 0, sizeof(struct mmc));
+	} else {
+		/* in bubl we have one mmc only: no malloc thanks */
+		static struct mmc the_mmc;
+		mmc = &the_mmc;
+	}
 	sprintf(mmc->name, "davinci");
 	mmc->priv = host;
 	mmc->send_cmd = dmmc_send_cmd;
