@@ -33,8 +33,8 @@
 #ifndef __ASM_ARCH_HARDWARE_H
 #define __ASM_ARCH_HARDWARE_H
 
-#include <config.h>
-#include <asm/sizes.h>
+//#include <config.h>
+//#include <asm/sizes.h>
 
 #define	REG(addr)	(*(volatile unsigned int *)(addr))
 #define REG_P(addr)	((volatile unsigned int *)(addr))

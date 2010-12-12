@@ -16,14 +16,20 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <config.h>
-#include <common.h>
-#include <command.h>
-#include <mmc.h>
-#include <part.h>
-#include <malloc.h>
-#include <asm/io.h>
-#include <asm/arch/sdmmc_defs.h>
+#include <bubl/types.h>
+#include <bubl/delay.h>
+#include <bubl/string.h>
+#include <bubl/tools.h>
+#include <u-boot-compat.h>
+
+//#include <config.h>
+//#include <common.h>
+//#include <command.h>
+#include "part.h"
+#include "mmc.h"
+//#include <malloc.h>
+//#include <asm/io.h>
+#include "sdmmc_defs.h"
 
 #define DAVINCI_MAX_BLOCKS	(32)
 #define WATCHDOG_COUNT		(100000)

@@ -21,7 +21,7 @@
 #ifndef _SDMMC_DEFS_H_
 #define _SDMMC_DEFS_H_
 
-#include <asm/arch/hardware.h>
+#include "hardware.h"
 
 /* MMC Control Reg fields */
 #define MMCCTL_DATRST		(1 << 0)
