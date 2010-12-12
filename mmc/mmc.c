@@ -23,16 +23,23 @@
  * MA 02111-1307 USA
  */
 
-#include <config.h>
-#include <common.h>
-#include <command.h>
-#include <mmc.h>
-#include <part.h>
-#include <malloc.h>
+#include <bubl/types.h>
+#include <bubl/delay.h>
+#include <bubl/string.h>
+#include <bubl/tools.h>
+#include <u-boot-compat.h>
+
+//#include <config.h>
+//#include <common.h>
+//#include <command.h>
+#include "part.h"
+#include "mmc.h"
+//#include <malloc.h>
 #include <linux/list.h>
-#include <mmc.h>
 #include <div64.h>
-#include <asm-generic/errno.h>
+//#include <asm-generic/errno.h>
+#include <linux/byteorder/generic.h>
+#include <linux/byteorder/little_endian.h>
 
 static struct list_head mmc_devices;
 static int cur_dev_num = -1;
@@ -89,7 +96,8 @@ mmc_write_blocks(struct mmc *mmc, ulong start, lbaint_t blkcnt, const void*src)
 
 	if ((start + blkcnt) > mmc->block_dev.lba) {
 		printf("MMC: block number 0x%lx exceeds max(0x%lx)",
-			start + blkcnt, mmc->block_dev.lba);
+		       (unsigned long)(start + blkcnt),
+		       (unsigned long)mmc->block_dev.lba);
 		return 0;
 	}
 
@@ -198,7 +206,13 @@ int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size)
 	int err = 0;
 
 	/* Make a buffer big enough to hold all the blocks we might read */
-	buffer = malloc(blklen);
+	if (0) {
+		buffer = malloc(blklen);
+	} else {
+		/* bubl has no malloc by now */
+		static char mmc_buffer[512];
+		buffer = mmc_buffer;
+	}
 
 	if (!buffer) {
 		printf("Could not allocate buffer for MMC read!\n");
@@ -235,7 +249,8 @@ int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size)
 	}
 
 free_buffer:
-	free(buffer);
+	if(0) /* no alloc/free in bubl */
+		free(buffer);
 
 	return err;
 }
@@ -251,7 +266,8 @@ static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 
 	if ((start + blkcnt) > mmc->block_dev.lba) {
 		printf("MMC: block number 0x%lx exceeds max(0x%lx)",
-			start + blkcnt, mmc->block_dev.lba);
+		       (unsigned long)(start + blkcnt),
+		       (unsigned long)mmc->block_dev.lba);
 		return 0;
 	}
 	/* We always do full block reads from the card */
@@ -859,7 +875,7 @@ int mmc_startup(struct mmc *mmc)
 			(mmc->cid[1] >> 8) & 0xff, mmc->cid[1] & 0xff);
 	sprintf(mmc->block_dev.revision, "%d.%d", mmc->cid[2] >> 28,
 			(mmc->cid[2] >> 24) & 0xf);
-	init_part(&mmc->block_dev);
+	//init_part(&mmc->block_dev);
 
 	return 0;
 }
@@ -941,7 +957,7 @@ int mmc_init(struct mmc *mmc)
 
 		if (err) {
 			printf("Card did not respond to voltage select!\n");
-			return ENODEV;
+			return -1;
 		}
 	}
 
