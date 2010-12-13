@@ -26,6 +26,9 @@ int sdcard_init(void)
 	struct mmc *mmc;
 
 	printk("%s\n", __func__);
+
+	mmc_initialize(&unused_bd);
+
 	davinci_mmc_init(&unused_bd, &mmc_sd0);
 
 	mmc = find_mmc_device(0);
