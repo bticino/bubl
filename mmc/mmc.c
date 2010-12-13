@@ -38,7 +38,7 @@
 #include <linux/list.h>
 #include <div64.h>
 //#include <asm-generic/errno.h>
-#include <linux/byteorder/generic.h>
+//#include <linux/byteorder/generic.h>
 #include <linux/byteorder/little_endian.h>
 
 static struct list_head mmc_devices;

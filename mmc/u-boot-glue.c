@@ -42,7 +42,7 @@ int sdcard_read_block(int blknr, unsigned long addr)
 {
 	static struct mmc *mmc;
 
-	printk("%s\n", __func__);
+//	printk("%s\n", __func__);
 	/* Lazy: keep the mmc pointer static... */
 	if (!mmc)
 		mmc = find_mmc_device(0);
