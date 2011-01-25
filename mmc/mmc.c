@@ -451,7 +451,7 @@ int mmc_change_freq(struct mmc *mmc)
 	if (mmc->version < MMC_VERSION_4)
 		return 0;
 
-	mmc->card_caps |= MMC_MODE_4BIT;
+//	mmc->card_caps |= MMC_MODE_4BIT;
 
 	err = mmc_send_ext_csd(mmc, ext_csd);
 
@@ -797,6 +797,8 @@ int mmc_startup(struct mmc *mmc)
 	if (IS_SD(mmc))
 		err = sd_change_freq(mmc);
 	else
+		
+//		printf("DM365 can't use 4 bit MMC mode and more than 20Mhz CLK\n");
 		err = mmc_change_freq(mmc);
 
 	if (err)
@@ -859,8 +861,11 @@ int mmc_startup(struct mmc *mmc)
 				mmc_set_clock(mmc, 52000000);
 			else
 				mmc_set_clock(mmc, 26000000);
-		} else
-			mmc_set_clock(mmc, 20000000);
+		} else {
+			printf("MMC MMC_MODE 1Mhz\n");
+			//mmc_set_clock(mmc, 10000000);
+			mmc_set_clock(mmc, 500000);
+		}
 	}
 
 	/* fill in device description */
