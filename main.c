@@ -8,7 +8,7 @@
 #include <bubl/timer.h>
 #include <bubl/adc.h>
 
-#include <mmcsd.h>
+#include "drivers/mmc/mmc-u-boot-glue.h"
 #include <s_record.h>
 
 #include "board.h" /* board selection using ADC values */
@@ -85,8 +85,7 @@ void bubl_main(void)
 /* This is the real work being done: the stack pointer is not at end-of-ram */
 void __attribute__((noreturn, noinline)) bubl_work(void)
 {
-	unsigned long addr;
-	unsigned long blknr = 4096 / 512; /* start at 4kB within the card */
+	unsigned long start_blk = 4096 / 512; /* start at 4kB within the card */
 
 	/*
 	 * Read u-boot to address 0x81080000
@@ -95,20 +94,16 @@ void __attribute__((noreturn, noinline)) bubl_work(void)
 	const unsigned long ub_addr = 0x81080000;
 	const unsigned long ub_size = 1024 * 256;
 	const unsigned long blksize = 512;
+	unsigned long ub_num_blks;
+	ub_num_blks = ub_size / blksize;
 
 	/* make the memory area dirty, to be sure it works */
 	memset((void *)ub_addr, 0xca, ub_size);
 
-
-	if (!sdcard_init()) {
-		printk("Loading u-boot ");
-		for (addr = ub_addr;
-		     addr < ub_addr + ub_size;
-		     addr += blksize, blknr++) {
-			sdcard_read_block(blknr, addr);
-			if ((blknr & 0xf) == 0)
-				printk(".");
-		}
+	if (!sdmmc_init()) {
+		printk("Loading %lu (%lu blocks) from SD or MMC number 0 (it should be u-boot)\n", ub_size, ub_num_blks);
+		printk("Starting from block %lu (offset %luKB) \n", start_blk, start_blk / 2 );
+		sdmmc_read_blocks(0, start_blk, ub_num_blks, ub_addr);
 	}
 
 	/* If  u-boot is not really there, use srecord */
