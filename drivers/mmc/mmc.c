@@ -23,16 +23,19 @@
  * MA 02111-1307 USA
  */
 
-#include <config.h>
-#include <common.h>
-#include <command.h>
-#include <mmc.h>
-#include <part.h>
-#include <malloc.h>
+#include <bubl/types.h>
+#include <bubl/delay.h>
+#include <bubl/string.h>
+#include <bubl/tools.h>
+#include <u-boot-compat.h>
+
+#include "part.h"
+#include "mmc.h"
 #include <linux/list.h>
-#include <mmc.h>
 #include <div64.h>
-#include <asm-generic/errno.h>
+#include <linux/byteorder/little_endian.h>
+
+#undef MMC_DEBUG
 
 static struct list_head mmc_devices;
 static int cur_dev_num = -1;
@@ -159,6 +162,9 @@ int mmc_read_blocks(struct mmc *mmc, void *dst, ulong start, lbaint_t blkcnt)
 {
 	struct mmc_cmd cmd;
 	struct mmc_data data;
+#ifdef MMC_DEBUG
+	int i;
+#endif
 
 	if (blkcnt > 1)
 		cmd.cmdidx = MMC_CMD_READ_MULTIPLE_BLOCK;
@@ -191,6 +197,16 @@ int mmc_read_blocks(struct mmc *mmc, void *dst, ulong start, lbaint_t blkcnt)
 			return 0;
 		}
 	}
+#ifdef MMC_DEBUG
+        printf("mmc_read_blocks: dumping data\n");
+        for (i=0; i<32;i++) {
+                int j;
+                printf("%03d - ", 512-i*16);
+                for (j=0; j<16;j++)
+                        printf("%02X ", data.dest[j+i*16]);
+                printf("\n");
+        }
+#endif
 
 	return blkcnt;
 }
@@ -349,6 +365,9 @@ int mmc_send_ext_csd(struct mmc *mmc, char *ext_csd)
 	struct mmc_cmd cmd;
 	struct mmc_data data;
 	int err;
+#ifdef MMC_DEBUG
+	int i;
+#endif
 
 	/* Get the Card Status Register */
 	cmd.cmdidx = MMC_CMD_SEND_EXT_CSD;
@@ -362,6 +381,17 @@ int mmc_send_ext_csd(struct mmc *mmc, char *ext_csd)
 	data.flags = MMC_DATA_READ;
 
 	err = mmc_send_cmd(mmc, &cmd, &data);
+
+#ifdef MMC_DEBUG
+        printf("mmc_send_ext_csd: dumping data\n");
+        for (i=0; i<32;i++) {
+                int j;
+                printf("%03d - ", i*16);
+                for (j=0; j<16;j++)
+                        printf("%02X ", data.dest[j+i*16]);
+                printf("\n");
+        }
+#endif
 
 	return err;
 }
@@ -393,9 +423,20 @@ int mmc_change_freq(struct mmc *mmc)
 	if (mmc->version < MMC_VERSION_4)
 		return 0;
 
-	mmc->card_caps |= MMC_MODE_4BIT;
+	printk("Using one data bit\n");
+//	mmc->card_caps |= MMC_MODE_4BIT;
 
 	err = mmc_send_ext_csd(mmc, ext_csd);
+#ifdef MMC_DEBUG
+	printf("ext_csd dumping data\n");
+	for (i=0; i<32;i++) {
+		int j;
+			printf("%03d - ", i*16);
+			for (j=0; j<16;j++)
+				printf("%02X ", ext_csd[j+i*16]);
+			printf("\n");
+	}
+#endif
 
 	if (err)
 		return err;
@@ -729,6 +770,13 @@ int mmc_startup(struct mmc *mmc)
 	if (!IS_SD(mmc) && (mmc->version >= MMC_VERSION_4)) {
 		/* check  ext_csd version and capacity */
 		err = mmc_send_ext_csd(mmc, ext_csd);
+#ifdef MMC_DEBUG
+		printf("ext_csd 192 = %X\n", ext_csd[192]);
+		printf("ext_csd 212 = %X\n", ext_csd[212]);
+		printf("ext_csd 213 = %X\n", ext_csd[213]);
+		printf("ext_csd 214 = %X\n", ext_csd[214]);
+		printf("ext_csd 215 = %X\n", ext_csd[215]);
+#endif
 		if (!err & (ext_csd[192] >= 2)) {
 			mmc->capacity = ext_csd[212] << 0 | ext_csd[213] << 8 |
 					ext_csd[214] << 16 | ext_csd[215] << 24;
@@ -749,6 +797,9 @@ int mmc_startup(struct mmc *mmc)
 
 	if (IS_SD(mmc)) {
 		if (mmc->card_caps & MMC_MODE_4BIT) {
+#ifdef MMC_DEBUG
+			printf("SD MMC_MODE_4BIT\n");
+#endif
 			cmd.cmdidx = MMC_CMD_APP_CMD;
 			cmd.resp_type = MMC_RSP_R1;
 			cmd.cmdarg = mmc->rca << 16;
@@ -775,6 +826,9 @@ int mmc_startup(struct mmc *mmc)
 			mmc_set_clock(mmc, 25000000);
 	} else {
 		if (mmc->card_caps & MMC_MODE_4BIT) {
+#ifdef MMC_DEBUG
+			printf("MMC MMC_MODE_4BIT\n");
+#endif
 			/* Set the card to use 4 bit*/
 			err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
 					EXT_CSD_BUS_WIDTH,
@@ -785,6 +839,9 @@ int mmc_startup(struct mmc *mmc)
 
 			mmc_set_bus_width(mmc, 4);
 		} else if (mmc->card_caps & MMC_MODE_8BIT) {
+#ifdef MMC_DEBUG
+			printf("MMC MMC_MODE_8BIT\n");
+#endif
 			/* Set the card to use 8 bit*/
 			err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
 					EXT_CSD_BUS_WIDTH,
@@ -797,12 +854,17 @@ int mmc_startup(struct mmc *mmc)
 		}
 
 		if (mmc->card_caps & MMC_MODE_HS) {
+#ifdef MMC_DEBUG
+			printf("MMC MMC_MODE_HS\n");
+#endif
 			if (mmc->card_caps & MMC_MODE_HS_52MHz)
 				mmc_set_clock(mmc, 52000000);
 			else
 				mmc_set_clock(mmc, 26000000);
-		} else
-			mmc_set_clock(mmc, 20000000);
+		} else {
+				printk("MMC clock set to 1Mhz\n");
+				mmc_set_clock(mmc, 1000000);
+		}
 	}
 
 	/* fill in device description */
@@ -817,7 +879,6 @@ int mmc_startup(struct mmc *mmc)
 			(mmc->cid[1] >> 8) & 0xff, mmc->cid[1] & 0xff);
 	sprintf(mmc->block_dev.revision, "%d.%d", mmc->cid[2] >> 28,
 			(mmc->cid[2] >> 24) & 0xf);
-	init_part(&mmc->block_dev);
 
 	return 0;
 }
@@ -895,11 +956,14 @@ int mmc_init(struct mmc *mmc)
 
 	/* If the command timed out, we check for an MMC card */
 	if (err == TIMEOUT) {
+#ifdef MMC_DEBUG
+		printf("It ISN'T an SD\n");
+#endif
 		err = mmc_send_op_cond(mmc);
 
 		if (err) {
 			printf("Card did not respond to voltage select!\n");
-			return ENODEV;
+			return -1;
 		}
 	}
 

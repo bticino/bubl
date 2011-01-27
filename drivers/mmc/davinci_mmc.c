@@ -16,17 +16,21 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <config.h>
-#include <common.h>
-#include <command.h>
-#include <mmc.h>
-#include <part.h>
-#include <malloc.h>
-#include <asm/io.h>
-#include <asm/arch/sdmmc_defs.h>
+#include <bubl/types.h>
+#include <bubl/delay.h>
+#include <bubl/string.h>
+#include <bubl/tools.h>
+#include <u-boot-compat.h>
+
+#include "part.h"
+#include "mmc.h"
+
+#include "sdmmc_defs.h"
 
 #define DAVINCI_MAX_BLOCKS	(32)
 #define WATCHDOG_COUNT		(100000)
+
+#undef MMC_DEBUG
 
 #define get_val(addr)		REG(addr)
 #define set_val(addr, val)	REG(addr) = (val)
@@ -112,6 +116,9 @@ static int dmmc_check_status(volatile struct davinci_mmc_regs *regs,
 			if (mmcstatus & MMCST0_TOUTRS)
 				return TIMEOUT;
 			printf("[ ST0 ERROR %x]\n", mmcstatus);
+			printf("mmcstatus = 0x%X\n", mmcstatus);
+			mmcstatus = get_val(&regs->mmcst0);
+			printf("re-read mmcstatus = 0x%X\n", mmcstatus);
 			/*
 			 * Ignore CRC errors as some MMC cards fail to
 			 * initialize on DM365-EVM on the SD1 slot
@@ -143,6 +150,9 @@ dmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	uint i, cmddata, bytes_left = 0;
 	int fifo_words, fifo_bytes, err;
 	char *data_buf = NULL;
+#ifdef MMC_DEBUG
+	int dump=0;
+#endif
 
 	/* Clear status registers */
 	mmcstatus = get_val(&regs->mmcst0);
@@ -155,7 +165,10 @@ dmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	cmddata = cmd->cmdidx;
 	cmddata |= MMCCMD_PPLEN;
 
-	/* Send init clock for CMD0 */
+	/* Snd init clock for CMD0 */
+#ifdef MMC_DEBUG
+	printf("\nCMD%d\n",cmd->cmdidx);
+#endif
 	if (cmd->cmdidx == MMC_CMD_GO_IDLE_STATE)
 		cmddata |= MMCCMD_INITCK;
 
@@ -189,6 +202,9 @@ dmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 
 		cmddata |= MMCCMD_WDATX;
 		if (data->flags == MMC_DATA_READ) {
+#ifdef MMC_DEBUG
+			printf("MMC_DATA_READ\n");
+#endif
 			set_val(&regs->mmcfifoctl, MMCFIFOCTL_FIFOLEV);
 		} else if (data->flags == MMC_DATA_WRITE) {
 			set_val(&regs->mmcfifoctl,
@@ -241,13 +257,27 @@ dmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	/* Collect response from controller for specific commands */
 	if (mmcstatus & MMCST0_RSPDNE) {
 		/* Copy the response to the response buffer */
-		if (cmd->resp_type & MMC_RSP_136) {
+		if ((cmd->resp_type & MMC_RSP_136) ||
+		    (cmd->resp_type & MMC_RSP_R1) ||
+		    (cmd->resp_type & MMC_RSP_R1b)) {
+#ifdef MMC_DEBUG
+			printf("READ: mmccidx = %08X\n",get_val(&regs->mmccidx));
+#endif
 			cmd->response[0] = get_val(&regs->mmcrsp67);
 			cmd->response[1] = get_val(&regs->mmcrsp45);
 			cmd->response[2] = get_val(&regs->mmcrsp23);
 			cmd->response[3] = get_val(&regs->mmcrsp01);
+#ifdef MMC_DEBUG
+			printf("response_0 0x%08X\n",cmd->response[0]);
+			printf("response_1 0x%08X\n",cmd->response[1]);
+			printf("response_2 0x%08X\n",cmd->response[2]);
+			printf("response_3 0x%08X\n",cmd->response[3]);
+#endif
 		} else if (cmd->resp_type & MMC_RSP_PRESENT) {
 			cmd->response[0] = get_val(&regs->mmcrsp67);
+#ifdef MMC_DEBUG
+			printf("response_0 0x%08X\n",cmd->response[0]);
+#endif
 		}
 	}
 
@@ -255,6 +285,7 @@ dmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 		return 0;
 
 	if (data->flags == MMC_DATA_READ) {
+
 		/* check for DATDNE along with DRRDY as the controller might
 		 * set the DATDNE without DRRDY for smaller transfers with
 		 * less than FIFO threshold bytes
@@ -267,6 +298,11 @@ dmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 		status_err = MMCST0_CRCWR;
 	}
 
+#ifdef MMC_DEBUG
+	printf("\nGOING TO READ %d\n", bytes_left);
+	if (bytes_left==512)
+		dump=1;
+#endif
 	/* Wait until all of the blocks are transferred */
 	while (bytes_left) {
 		err = dmmc_check_status(regs, &mmcstatus, status_rdy,
@@ -378,17 +414,24 @@ int davinci_mmc_init(bd_t *bis, struct davinci_mmc *host)
 {
 	struct mmc *mmc;
 
-	mmc = malloc(sizeof(struct mmc));
-	memset(mmc, 0, sizeof(struct mmc));
-
+	if (0) {
+		/* u-bot code */
+		mmc = malloc(sizeof(struct mmc));
+		memset(mmc, 0, sizeof(struct mmc));
+	} else {
+		/* in bubl we have one mmc only: no malloc thanks */
+		static struct mmc the_mmc;
+		mmc = &the_mmc;
+	}
 	sprintf(mmc->name, "davinci");
 	mmc->priv = host;
 	mmc->send_cmd = dmmc_send_cmd;
 	mmc->set_ios = dmmc_set_ios;
 	mmc->init = dmmc_init;
 
+	printf("mmc: clk max is set to 1Mhz\n");
 	mmc->f_min = 200000;
-	mmc->f_max = 25000000;
+	mmc->f_max = 1000000;
 	mmc->voltages = host->voltages;
 	mmc->host_caps = host->host_caps;
 
