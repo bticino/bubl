@@ -32,7 +32,7 @@ obj-c += s_record.o
 obj-c += lib/ctype.o lib/string.o
 obj-c += lib/sprintf.o lib/strtol.o lib/printk.o lib/vsprintf.o lib/div64.o
 #obj-c += mmc/mmcsd_evm.o mmc/mmcsd_protocol.o mmc/mmc_glue.o
-obj-c += mmc/mmc.o mmc/davinci_mmc.o mmc/u-boot-glue.o
+obj-c += drivers/mmc/mmc.o drivers/mmc/davinci_mmc.o drivers/mmc/mmc-u-boot-glue.o
 
 # we have some division
 obj-s += libgcc/_udivsi3.o libgcc/_divsi3.o
