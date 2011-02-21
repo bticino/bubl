@@ -59,8 +59,8 @@ void bubl_main(void)
 	misc_setup1();
 	serial_setup();
 
-	printk("Function %s (%s:%i), compile date %s\n",
-	       __FILE__, __func__, __LINE__, __DATE__);
+	printk("Function %s (%s:%i), compile date %s-%s\n",
+	       __FILE__, __func__, __LINE__, __DATE__, __TIME__);
 
 	printk("1M nops before pll: %i usec\n", usec1);
 	printk("1M nops after  pll: %i usec\n", usec2);
