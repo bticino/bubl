@@ -40,6 +40,7 @@ void bubl_main(void)
 	int usec1, usec2;
 	int i, adcvals[6];
 	struct pll_config *cfg;
+	int freq;
 
 	misc_setup0();
 	timer_setup();
@@ -49,6 +50,7 @@ void bubl_main(void)
 	adc_setup();
 	for (i = 0; i < 6; i++)
 		adcvals[i] = adc_read(i);
+
 	cfg = board_get_config(adcvals);
 
 	usec1 = nop(1000*1000);
@@ -62,11 +64,15 @@ void bubl_main(void)
 	printk("Function %s (%s:%i), compile date %s-%s\n",
 	       __FILE__, __func__, __LINE__, __DATE__, __TIME__);
 
+	printk("ADC values: ");
+	for (i = 0; i < 6; i++) {
+		printk("%i ", adcvals[i]);
+	}
+	printk("\n");
+	board_dump_config(adcvals);
+
 	printk("1M nops before pll: %i usec\n", usec1);
 	printk("1M nops after  pll: %i usec\n", usec2);
-	printk("ADC values: ");
-	for (i = 0; i < 6; i++)
-		printk("%i%c", adcvals[i], i==5 ? '\n' : ' ');
 
 	/* Check the RAM */
 	ramsize = ram_test(RAMADDR);
