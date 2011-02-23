@@ -428,13 +428,16 @@ int mmc_change_freq(struct mmc *mmc)
 
 	err = mmc_send_ext_csd(mmc, ext_csd);
 #ifdef MMC_DEBUG
-	printf("ext_csd dumping data\n");
-	for (i=0; i<32;i++) {
-		int j;
-			printf("%03d - ", i*16);
-			for (j=0; j<16;j++)
-				printf("%02X ", ext_csd[j+i*16]);
-			printf("\n");
+	{
+		int i;
+		printf("ext_csd dumping data\n");
+		for (i=0; i<32;i++) {
+			int j;
+				printf("%03d - ", i*16);
+				for (j=0; j<16;j++)
+					printf("%02X ", ext_csd[j+i*16]);
+				printf("\n");
+		}
 	}
 #endif
 
