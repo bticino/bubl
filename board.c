@@ -113,7 +113,7 @@ static struct pll_config Mhz270_pll_config = {
 };
 
 
-struct pll_config *board_get_config(int * adcvals)
+struct pll_config *board_pll_get_config(int * adcvals)
 {
 	int i, adcvals_norm[6], freq;
 
@@ -125,11 +125,16 @@ struct pll_config *board_get_config(int * adcvals)
 
 	freq = freqs[adcvals[4]%5];
 	switch (freq) {
+	case (432):
+	case (297):
+		return &Mhz297_pll_config;
+		break;
 	case (270):
 		return &Mhz270_pll_config;
 		break;
+	case (216):
 	default:
-		for(;;); /* What can I do? */
+		return &Mhz270_pll_config; /* It should be 216Mhz */
 	}
 }
 
@@ -138,24 +143,27 @@ void board_dump_config(int * adcvals)
 	int i, adcvals_norm[6], freq;
 
 	for (i = 0; i < 6; i++) {
-		printk("%i ", adcvals[i]);
+		printk("%i-", adcvals[i]);
 		adcvals_norm[i] = normalize_adc(adcvals[i]);
-		printk("%i%c", adcvals_norm[i], i==5 ? '\n' : '-');
+		printk("%i%c", adcvals_norm[i], i==5 ? '\n' : ' ');
 	}
 
 	printk("Board:        %s\n", boards[adcvals_norm[2]+10*adcvals_norm[3]]);
 	printk("Hw Version:   %i\n", adcvals_norm[1]);
-	printk("Booting from: %s\n", bootings[adcvals_norm[5]/5]);
+	printk("Booting from: %s\n", bootings[adcvals_norm[4]/5]);
+	printk("Cpu Freq:     %iMhz\n", freqs[adcvals_norm[4]%5]);
+}
 
-	freq = freqs[adcvals_norm[4]%5];
-	switch (freq) {
-	case (270):
-		printk("Cpu Freq:     %iMhz\n", freq);
-		break;
-	default:
-		printk("Not available frequency\n");
-		printk("Idle loop starts\n");
-		for(;;);
+int board_boot_cfg_get_config(int * adcvals)
+{
+	int i, adcvals_norm[6], freq;
+
+	for (i = 0; i < 6; i++) {
+		printk("%i- ", adcvals[i]);
+		adcvals_norm[i] = normalize_adc(adcvals[i]);
+		printk("%i%c", adcvals_norm[i], i==5 ? '\n' : ' ');
 	}
+
+	return bootings[adcvals_norm[4]/5][0]; /* passing only first char */
 }
 

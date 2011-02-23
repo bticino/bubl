@@ -13,6 +13,8 @@
 
 #include "board.h" /* board selection using ADC values */
 
+int boot_cfg;
+
 static unsigned ram_test(int base)
 {
 	u32 *bptr = (u32 *)base;
@@ -30,7 +32,7 @@ static unsigned ram_test(int base)
 	return size << 2;
 }
 
-static void bubl_work(void);
+static void bubl_work(int);
 static void __attribute__((__noreturn__)) do_srecord(void);
 
 /* This functions turns on the system, and calls the working function */
@@ -39,8 +41,7 @@ void bubl_main(void)
 	unsigned ramsize;
 	int usec1, usec2;
 	int i, adcvals[6];
-	struct pll_config *cfg;
-	int freq;
+	struct pll_config *pll_cfg;
 
 	misc_setup0();
 	timer_setup();
@@ -51,10 +52,10 @@ void bubl_main(void)
 	for (i = 0; i < 6; i++)
 		adcvals[i] = adc_read(i);
 
-	cfg = board_get_config(adcvals);
+	pll_cfg = board_pll_get_config(adcvals);
 
 	usec1 = nop(1000*1000);
-	pll_setup(cfg);
+	pll_setup(pll_cfg);
 	usec2 = nop(1000*1000);
 
 	ddr_setup();
@@ -103,11 +104,12 @@ void bubl_main(void)
 	/* Now move the stack pointer to RAM */
 	asm volatile("sub sp, %0, #16" : : "r" (RAMADDR + ramsize) : "memory");
 
-	bubl_work();
+	boot_cfg = board_boot_cfg_get_config(adcvals);
+	bubl_work(boot_cfg);
 }
 
 /* This is the real work being done: the stack pointer is not at end-of-ram */
-void __attribute__((noreturn, noinline)) bubl_work(void)
+void __attribute__((noreturn, noinline)) bubl_work(int boot_cfg)
 {
 	unsigned long start_blk = 4096 / 512; /* start at 4kB within the card */
 
@@ -124,11 +126,25 @@ void __attribute__((noreturn, noinline)) bubl_work(void)
 	/* make the memory area dirty, to be sure it works */
 	memset((void *)ub_addr, 0xca, ub_size);
 
-	if (!sdmmc_init()) {
-		printk("Loading %lu (%lu blocks) from SD or MMC number 0 (it should be u-boot)\n", ub_size, ub_num_blks);
-		printk("Starting from block %lu (offset %luKB) \n", start_blk, start_blk / 2 );
-		sdmmc_read_blocks(0, start_blk, ub_num_blks, ub_addr);
+	switch (boot_cfg) {
+	case 'e':
+		printk("eMMC boot\n");
+		if (!sdmmc_init()) {
+			printk("Loading %lu (%lu blocks) from SD or MMC \ 
+					number 0 (it should be u-boot)\n",
+					ub_size, ub_num_blks);
+			printk("Starting from block %lu (offset %luKB) \n",
+					start_blk, start_blk / 2 );
+			sdmmc_read_blocks(0, start_blk, ub_num_blks, ub_addr);
+		}
+		break;
+	case 'N':
+		printk("NAND boot\n");
+		break;
+	default:
+		printk("boot device not recognized .. trying serial loader\n");
 	}
+
 
 	/* If  u-boot is not really there, use srecord */
 	if (((u32 *)ub_addr)[0xf] != 0xdeadbeef)
@@ -158,7 +174,7 @@ void do_srecord(void)
 	}
 	/* If successful, we won't get here */
 	printk("\nLoad failed, back to work...\n");
-	bubl_work();
+	bubl_work(boot_cfg);
 }
 
 /*

@@ -9,7 +9,7 @@ const char* boards[] = {
 	"ARGES\000",
 };
 
-const int freqs[]={270, 216, 300,400, -1};
+const int freqs[]={270, 216, 297, 432, -1};
 
 const char* bootings[]={"eMMC", "NAND"};
 
