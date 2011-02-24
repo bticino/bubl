@@ -130,8 +130,7 @@ void __attribute__((noreturn, noinline)) bubl_work(int boot_cfg)
 	case 'e':
 		printk("eMMC boot\n");
 		if (!sdmmc_init()) {
-			printk("Loading %lu (%lu blocks) from SD or MMC \ 
-					number 0 (it should be u-boot)\n",
+			printk("Loading %lu (%lu blocks) from SD or MMC number 0\n",
 					ub_size, ub_num_blks);
 			printk("Starting from block %lu (offset %luKB) \n",
 					start_blk, start_blk / 2 );
