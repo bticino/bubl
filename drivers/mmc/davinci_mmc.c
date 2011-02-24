@@ -429,9 +429,8 @@ int davinci_mmc_init(bd_t *bis, struct davinci_mmc *host)
 	mmc->set_ios = dmmc_set_ios;
 	mmc->init = dmmc_init;
 
-	printf("mmc: clk max is set to 10Mhz\n");
 	mmc->f_min = 200000;
-	mmc->f_max = 10000000;
+	mmc->f_max = 20000000;
 	mmc->voltages = host->voltages;
 	mmc->host_caps = host->host_caps;
 
