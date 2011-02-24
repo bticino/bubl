@@ -423,8 +423,7 @@ int mmc_change_freq(struct mmc *mmc)
 	if (mmc->version < MMC_VERSION_4)
 		return 0;
 
-	printk("Using one data bit\n");
-//	mmc->card_caps |= MMC_MODE_4BIT;
+	mmc->card_caps |= MMC_MODE_4BIT | MMC_MODE_HS | MMC_MODE_HS_52MHz;
 
 	err = mmc_send_ext_csd(mmc, ext_csd);
 #ifdef MMC_DEBUG
