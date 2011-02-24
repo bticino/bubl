@@ -286,7 +286,6 @@ dmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 		return 0;
 
 	if (data->flags == MMC_DATA_READ) {
-
 		/* check for DATDNE along with DRRDY as the controller might
 		 * set the DATDNE without DRRDY for smaller transfers with
 		 * less than FIFO threshold bytes
