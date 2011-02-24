@@ -140,7 +140,7 @@ void board_dump_config(int * adcvals)
 {
 	int i, adcvals_norm[6];
 
-	printk("ADC val (raw,norm): ", adcvals[i]);
+	printk("ADC val (raw,norm): ");
 	for (i = 0; i < 6; i++) {
 		printk("(%i,", adcvals[i]);
 		adcvals_norm[i] = normalize_adc(adcvals[i]);
