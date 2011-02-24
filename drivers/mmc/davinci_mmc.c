@@ -41,7 +41,7 @@
 static void dmmc_set_clock(struct mmc *mmc, uint clock)
 {
 	struct davinci_mmc *host = mmc->priv;
-	struct davinci_mmc_regs *regs = host->reg_base;
+	volatile struct davinci_mmc_regs *regs = host->reg_base;
 	uint clkrt, sysclk2, act_clock;
 
 	if (clock < mmc->f_min)
@@ -359,7 +359,7 @@ dmmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 static int dmmc_init(struct mmc *mmc)
 {
 	struct davinci_mmc *host = mmc->priv;
-	struct davinci_mmc_regs *regs = host->reg_base;
+	volatile struct davinci_mmc_regs *regs = host->reg_base;
 
 	/* Clear status registers explicitly - soft reset doesn't clear it
 	 * If Uboot is invoked from UBL with SDMMC Support, the status
@@ -394,7 +394,7 @@ static int dmmc_init(struct mmc *mmc)
 static void dmmc_set_ios(struct mmc *mmc)
 {
 	struct davinci_mmc *host = mmc->priv;
-	struct davinci_mmc_regs *regs = host->reg_base;
+	volatile struct davinci_mmc_regs *regs = host->reg_base;
 
 	/* Set the bus width */
 	if (mmc->bus_width == 4)
