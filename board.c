@@ -118,9 +118,7 @@ struct pll_config *board_pll_get_config(int * adcvals)
 	int i, adcvals_norm[6], freq;
 
 	for (i = 0; i < 6; i++) {
-		printk("%i ", adcvals[i]);
 		adcvals_norm[i] = normalize_adc(adcvals[i]);
-		printk("%i%c", adcvals[i], i==5 ? '\n' : '-');
 	}
 
 	freq = freqs[adcvals[4]%5];
@@ -140,12 +138,13 @@ struct pll_config *board_pll_get_config(int * adcvals)
 
 void board_dump_config(int * adcvals)
 {
-	int i, adcvals_norm[6], freq;
+	int i, adcvals_norm[6];
 
+	printk("ADC val (raw,norm): ", adcvals[i]);
 	for (i = 0; i < 6; i++) {
-		printk("%i-", adcvals[i]);
+		printk("(%i,", adcvals[i]);
 		adcvals_norm[i] = normalize_adc(adcvals[i]);
-		printk("%i%c", adcvals_norm[i], i==5 ? '\n' : ' ');
+		printk("%i)%c", adcvals_norm[i], i==5 ? '\n' : ' ');
 	}
 
 	printk("Board:        %s\n", boards[adcvals_norm[2]+10*adcvals_norm[3]]);
@@ -156,12 +155,10 @@ void board_dump_config(int * adcvals)
 
 int board_boot_cfg_get_config(int * adcvals)
 {
-	int i, adcvals_norm[6], freq;
+	int i, adcvals_norm[6];
 
 	for (i = 0; i < 6; i++) {
-		printk("%i- ", adcvals[i]);
 		adcvals_norm[i] = normalize_adc(adcvals[i]);
-		printk("%i%c", adcvals_norm[i], i==5 ? '\n' : ' ');
 	}
 
 	return bootings[adcvals_norm[4]/5][0]; /* passing only first char */
