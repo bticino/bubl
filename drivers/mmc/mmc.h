@@ -287,6 +287,8 @@ struct mmc *find_mmc_device(int dev_num);
 int mmc_set_dev(int dev_num);
 void print_mmc_devices(char separator);
 int board_mmc_getcd(u8 *cd, struct mmc *mmc);
+int mmc_read_blocks(struct mmc *mmc, void *dst, ulong start, lbaint_t blkcnt);
+
 
 #ifdef CONFIG_GENERIC_MMC
 int atmel_mci_init(void *regs);
