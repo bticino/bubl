@@ -995,8 +995,8 @@ int mmc_startup(struct mmc *mmc)
 			else
 				mmc_set_clock(mmc, 26000000);
 		} else {
-				printk("MMC clock set to 20Mhz\n");
-				mmc_set_clock(mmc, 20000000);
+				printk("MMC clock set to 50Mhz\n");
+				mmc_set_clock(mmc, 50000000);
 		}
 	}
 
