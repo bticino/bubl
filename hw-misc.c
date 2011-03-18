@@ -140,24 +140,23 @@ int misc_setup0(void)
 		psc_turn_on(26); /* gpio == 26 */
 	}
 
-#if 1
 	/*
-	 * I can't remove these settings or the uart won't work.
-	 * I should find the bits needed for uart alone, but I haven't
+	 * BASI Board pinmux
+	 * (Default direction for GIOs is input)
+	 * MMC reset released (43)
+	 * Eth reset off (44),
+	 * boot flash on (45),
 	 */
-	DEVICE_pinmuxControl(0,0xFFFFFFFF,0x00FD0000);  // All Video Inputs
-	DEVICE_pinmuxControl(1,0xFFFFFFFF,0x00145555);  // All Video Outputs
-	DEVICE_pinmuxControl(2,0xFFFFFFFF,0x000000DA);  // EMIFA
+	DEVICE_pinmuxControl(0,0xFFFFFFFF,0x00007F55);
 
-	// SPI0, SPI1, UART1, I2C, SD0, SD1, McBSP0, CLKOUTs
-	DEVICE_pinmuxControl(3,0xFFFFFFFF,0x00180000);
+	DEVICE_pinmuxControl(1,0xFFFFFFFF,0x00430000);
+	DEVICE_pinmuxControl(2,0xFFFFFFFF,0x00001F80);
 
-	// MMC/SD0 instead of MS, SPI0
-	DEVICE_pinmuxControl(4,0xFFFFFFFF,0x55555555);
+	/* EMAC, UART0 */
+	DEVICE_pinmuxControl(3,0xFFFFFFFF,0x001A0000);
 
-	GPIO->DIR02 &= 0xfeffffff;
-	GPIO->CLRDATA02 = 0x01000000;
-#endif
+	DEVICE_pinmuxControl(4,0xFFFFFFFF,0x00000000);
+
 	return 0;
 }
 
