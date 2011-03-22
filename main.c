@@ -42,6 +42,7 @@ void bubl_main(void)
 	int usec1, usec2;
 	int i, adcvals[6];
 	struct pll_config *pll_cfg;
+	int err = 0;
 
 	misc_setup0();
 	timer_setup();
@@ -92,10 +93,16 @@ void bubl_main(void)
 		//asm volatile("" : : : "memory");
 		for (i = j = 0; i < ramsize; i+= stepa)
 			if (*(volatile unsigned long *)(RAMADDR + i)
-			    != (j += stepv))
+			    != (j += stepv)) {
 				printk("RAM error at %x)\n", RAMADDR + i);
+				err = 1;
+			}
 	}
 
+	if (err) {
+		printk("Restarting!\n");
+		reset_cpu(0);
+	}
 
 	/* Check the RAM speed */
 	usec1 = mw(1000*1000, (void *)RAMADDR);

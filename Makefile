@@ -26,7 +26,7 @@ CFLAGS = -O2 -Wall -ggdb -ffreestanding -Iinclude
 all: $(ALL)
 
 # objects that make the program
-obj-s := boot.o 
+obj-s := boot.o reset.o
 obj-c += header.o pll.o hw-misc.o serial.o ddr.o timer.o adc.o board.o main.o
 obj-c += s_record.o
 obj-c += lib/ctype.o lib/string.o
