@@ -6,7 +6,41 @@
 #include <bubl/types.h>
 #include <bubl/timer.h>
 
+#define CONFIG_SYS_HZ_CLOCK		24000000
+#define CONFIG_SYS_WATCHDOG_VALUE	(5 * 60) /* seconds to watchdog reboot */
+
 #define timer_base ((volatile u32 *)0x01c21800) /* Timer 1 (0 used by uboot) */
+#define wdtimer_base ((volatile u32 *)0x01c21c00) /* Timer 2 (also used by uboot) */
+
+static void wd_timer_init(void)
+{
+	uint64_t timeo = ((uint64_t) CONFIG_SYS_HZ_CLOCK) *
+				((uint64_t) CONFIG_SYS_WATCHDOG_VALUE);
+
+	/* Disable, internal clock source */
+	wdtimer_base[TIM_TCR] = 0;
+
+	/* Reset timer, set mode to 64-bit watchdog, and unreset */
+	wdtimer_base[TIM_TGCR] = 0;
+	wdtimer_base[TIM_TGCR] = (2 << 2) | 3;
+
+	/* Clear counter regs */
+	wdtimer_base[TIM_TIM12] = 0;
+	wdtimer_base[TIM_TIM34] = 0;
+
+	/* Set timeout period */
+	wdtimer_base[TIM_PRD12] = timeo & 0xffffffff;
+	wdtimer_base[TIM_PRD34] = timeo >> 32;
+
+	/* Enable run continuously */
+	wdtimer_base[TIM_TCR] = (2 << 6) | (2 << 22);
+
+	wdtimer_base[TIM_WDTCR] = 0xa5c64000;
+	wdtimer_base[TIM_WDTCR] = 0xda7e4000;
+
+	wdtimer_base[TIM_EMUMGT] = 0x1; /* free running */
+
+}
 
 void timer_setup(void)
 {
@@ -22,6 +56,8 @@ void timer_setup(void)
 		| (1 << 4) /* new features? */
 		| (1 << 2) /* dual 32 bit unchained */
 		| 3; /* both out of reset; */
+
+	wd_timer_init();
 }
 
 u32 timer_read(void)
