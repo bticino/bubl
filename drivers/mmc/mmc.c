@@ -934,7 +934,6 @@ int mmc_startup(struct mmc *mmc)
 
 	if (IS_SD(mmc)) {
 		if (mmc->card_caps & MMC_MODE_4BIT) {
-			printf("SD MMC_MODE_4BIT\n");
 			cmd.cmdidx = MMC_CMD_APP_CMD;
 			cmd.resp_type = MMC_RSP_R1;
 			cmd.cmdarg = mmc->rca << 16;
@@ -961,7 +960,6 @@ int mmc_startup(struct mmc *mmc)
 			mmc_set_clock(mmc, 25000000);
 	} else {
 		if (mmc->card_caps & MMC_MODE_4BIT) {
-			printf("MMC MMC_MODE_4BIT\n");
 
 			/* Set the card to use 4 bit*/
 			err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
@@ -973,7 +971,6 @@ int mmc_startup(struct mmc *mmc)
 
 			mmc_set_bus_width(mmc, 4);
 		} else if (mmc->card_caps & MMC_MODE_8BIT) {
-			printf("MMC MMC_MODE_8BIT\n");
 
 			/* Set the card to use 8 bit*/
 			err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
@@ -984,20 +981,15 @@ int mmc_startup(struct mmc *mmc)
 				return err;
 
 			mmc_set_bus_width(mmc, 8);
-		} else {
-			printf("MMC MMC_MODE_1BIT\n");
 		}
 
 		if (mmc->card_caps & MMC_MODE_HS) {
-			printf("MMC MMC_MODE_HS\n");
 			if (mmc->card_caps & MMC_MODE_HS_52MHz)
 				mmc_set_clock(mmc, 52000000);
 			else
 				mmc_set_clock(mmc, 26000000);
-		} else {
-				printk("MMC clock set to 50Mhz\n");
+		} else
 				mmc_set_clock(mmc, 50000000);
-		}
 	}
 
 	/* fill in device description */

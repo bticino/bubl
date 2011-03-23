@@ -65,7 +65,6 @@ static void dmmc_set_clock(struct mmc *mmc, uint clock)
 		clkrt = 0xFF;
 
 	set_val(&regs->mmcclk, (clkrt | MMCCLK_CLKEN));
-	printf("mmclk=%X\n", get_val(&regs->mmcclk));
 }
 
 /* Status bit wait loop for MMCST1 */

@@ -63,14 +63,9 @@ void bubl_main(void)
 	misc_setup1();
 	serial_setup();
 
-	printk("Function %s (%s:%i), compile date %s-%s\n",
+	printk("\nFunction %s (%s:%i), compile date %s-%s\n",
 	       __FILE__, __func__, __LINE__, __DATE__, __TIME__);
 
-	printk("ADC values: ");
-	for (i = 0; i < 6; i++) {
-		printk("%i ", adcvals[i]);
-	}
-	printk("\n");
 	board_dump_config(adcvals);
 
 	printk("1M nops before pll: %i usec\n", usec1);
@@ -135,17 +130,14 @@ void __attribute__((noreturn, noinline)) bubl_work(int boot_cfg)
 
 	switch (boot_cfg) {
 	case 'e':
-		printk("eMMC boot\n");
 		if (!sdmmc_init()) {
-			printk("Loading %lu (%lu blocks) from SD or MMC number 0\n",
-					ub_size, ub_num_blks);
-			printk("Starting from block %lu (offset %luKB) \n",
-					start_blk, start_blk / 2 );
+			printk("Loading %luKB from offset %luKB of SD or MMC number 0\n",
+					ub_size, start_blk / 2);
 			sdmmc_read_blocks(0, start_blk, ub_num_blks, ub_addr);
 		}
 		break;
 	case 'N':
-		printk("NAND boot\n");
+		printk("NAND boot not yet implemented\n");
 		break;
 	default:
 		printk("boot device not recognized .. trying serial loader\n");
