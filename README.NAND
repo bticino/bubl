@@ -1,0 +1,158 @@
+1. Initial Considerations
+=========================
+
+(read [sprufi1c.pdf|http://www.ti.com/litv/pdf/sprufi1c] page 27/28/...)
+DM365 Hw gives a 4-bit ECC Reed Solomon ECC for 8-bit bus wide NAND.
+The 4-bit ECC can correct up to four byte errors in a 512-byte read operation.
+This means that more than four bit errors can be corrected, as long as all of
+the bit errors are confined to four or fewer distinct bytes
+ - read(Page_i_block_j) must be performed with 4 read of 512 bytes
+ - in spare area we store both a EDC (Error Detection Code - called also
+   Parity) and an ECC (Error Correction Code - called also Syndrome)
+ - if EDC is correct -> OK
+ - if EDC is wrong -> use syndrome to correct
+
+1.1 Nand memory organization
+============================
+
+          +---+---+---+         +----+
+          |   |   |   |         |    |
+blocks    | 0 | 1 | 2 |   ...   |2047|
+          |   |   |   |         |    |
+          +---+---+---+         +----+
+         /     \_______
+        /              \_______
+       /                       \
+      +---+---+---+         +---+
+      |   |   |   |         |   |
+pages | 0 | 1 | 2 |   ...   | 63|
+      |   |   |   |         |   |
+      +---+---+---+         +---+
+      |    \_______________
+      |                    \______________
+      |                                   \
+      +---+---+---+         +----++----+----+
+      |   |   |   |         |    ||    |    |
+bytes | 0 | 1 | 2 |   ...   |2047|| ...|2111|
+      |   |   |   |         |    ||    |    |
+      +---+---+---+         +----++----+----+
+                                   Spare Area
+
+
+2. The Rationale
+================
+
+Nand memory is difficoult to manage because can loose data for the following
+reasons:
+
+ - program and read operations disturb endurance of data; It is assumed that up
+   to 1 million READ cycles (per block) should not affect data.
+ - A non-cycled block can start loosing data (after 10 years?)
+ - the more a block is cycled (erased and written) the less is its data
+   retention;
+
+For what concerns firsts blocks:
+ * u-boot is not updatable (first blocks are never cycled);
+ * without a valid copy of u-boot the device is unrecoverable;
+ * bticino devices are supposed to work for very long time (more than 10 years)
+
+For this reasons the starting procedure should have the following features:
+ * u-boot is written more than one time -> 4 copies
+ * A valid copy foreach page in whatever copy of u-boot must be enougth to boot
+   properly
+ * If an error correction is detected, it is considered a hint that the page is
+   deteriorating so the entire block is read, erased and re-flashed
+ * If a page is erased (a reboot happens during the procedure at the previos
+   step) it is re-flashed using the same page in another copy of u-boot
+ * A space of 384KB (393216=0x60000 bytes) is reserved foreach copy of u-boot
+
+
+2.1 U-Boot storage
+==================
+
+             +---+     +---+---+     +---+---+     +---+
+             |pag|     |pag|pag|     |pag|pag|     |pag|
+U-BOOT-COPY1 |   | ... |   |   | ... |   |   | ... |   |
+             | 0 |     | 63| 64|     |127|128|     |191|
+             +---+     +---+---+     +---+---+     +---+
+
+             |---Block 0---|---Block 1---|---Block 2---|
+........................................................
+
+             +---+     +---+---+     +---+---+     +---+
+             |pag|     |pag|pag|     |pag|pag|     |pag|
+U-BOOT-COPY2 |   | ... |   |   | ... |   |   | ... |   |
+             |192|     |255|256|     |319|320|     |383|
+             +---+     +---+---+     +---+---+     +---+
+
+             |---Block 3---|---Block 4---|---Block 5---|
+........................................................
+
+
+             +---+     +---+---+     +---+---+     +---+
+             |pag|     |pag|pag|     |pag|pag|     |pag|
+U-BOOT-COPY3 |   | ... |   |   | ... |   |   | ... |   |
+             |384|     |447|448|     |511|512|     |575|
+             +---+     +---+---+     +---+---+     +---+
+
+             |---Block 6---|---Block 7---|---Block 8---|
+........................................................
+
+
+             +---+     +---+---+     +---+---+     +---+
+             |pag|     |pag|pag|     |pag|pag|     |pag|
+U-BOOT-COPY4 |   | ... |   |   | ... |   |   | ... |   |
+             |576|     |639|640|     |703|704|     |767|
+             +---+     +---+---+     +---+---+     +---+
+
+             |---Block 9---|---Block 10--|---Block 11--|
+........................................................
+
+
+
+2.2 The Implemented Algorithm
+=============================
+
+/* accessory function */
+Page_Read_and_correct()
+{
+	for (i = 0; i < 4; i++) {
+		NAND_read_page( page + i * pageoffset);
+		if (page_already_read_ok)
+			don't_care_about_read_data
+		else
+			copy_read_data_to_valid_bufer
+
+		if (page_is_blank)
+			copy_page_from_another_copy
+
+		if (made_corrections_while_reading) {
+			erase_block
+			refresh_block
+		} else if (mtd->ecc_stats.failed) {
+	  /* it is possible to erase block and flash again from another copy */
+			continue
+		}
+		Page_read_OK
+	}
+}
+
+/* Main Function */
+Read_u_boot_from_nand()
+{
+	read_uboot_header;
+	retrieve antry_point & size from header;
+	do {
+		read_page_update(page++);
+	} while (read_length);
+}
+
+2.3 The Code
+============
+The code is ported from u-boot removing all un-necessary functions.
+U-boot version:
+v2010.12-rc2
+Last commit:
+Sudhakar Rajashekhara
+tools/uflash: do not build uflash as statically linked binary
+

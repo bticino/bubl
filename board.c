@@ -5,23 +5,23 @@
 
 int normalize_adc(int adcval)
 {
-	if (adcval<=43)
+	if (adcval <= 43)
 		return 0;
-	if (adcval<=128)
+	if (adcval <= 128)
 		return 1;
-	if (adcval<=213)
+	if (adcval <= 213)
 		return 2;
-	if (adcval<=313)
+	if (adcval <= 313)
 		return 3;
-	if (adcval<=441)
+	if (adcval <= 441)
 		return 4;
-	if (adcval<=580)
+	if (adcval <= 580)
 		return 5;
-	if (adcval<=717)
+	if (adcval <= 717)
 		return 6;
-	if (adcval<=828)
+	if (adcval <= 828)
 		return 7;
-	if (adcval<=947)
+	if (adcval <= 947)
 		return 8;
 	return 9;
 }
@@ -115,11 +115,7 @@ static struct pll_config Mhz270_pll_config = {
 
 struct pll_config *board_pll_get_config(int * adcvals)
 {
-	int i, adcvals_norm[6], freq;
-
-	for (i = 0; i < 6; i++) {
-		adcvals_norm[i] = normalize_adc(adcvals[i]);
-	}
+	int freq;
 
 	freq = freqs[adcvals[4]%5];
 	switch (freq) {
@@ -136,31 +132,21 @@ struct pll_config *board_pll_get_config(int * adcvals)
 	}
 }
 
-void board_dump_config(int * adcvals)
+void board_dump_config(int *adcvals_norm)
 {
-	int i, adcvals_norm[6];
-
-	printk("ADC val (raw,norm): ");
-	for (i = 0; i < 6; i++) {
-		printk("(%i,", adcvals[i]);
-		adcvals_norm[i] = normalize_adc(adcvals[i]);
-		printk("%i)%c", adcvals_norm[i], i==5 ? '\n' : ' ');
-	}
-
-	printk("Board:        %s\n", boards[adcvals_norm[2]+10*adcvals_norm[3]]);
-	printk("Hw Version:   %i\n", adcvals_norm[1]);
-	printk("Booting from: %s\n", bootings[adcvals_norm[4]/5]);
-	printk("Cpu Freq:     %iMhz\n", freqs[adcvals_norm[4]%5]);
+	printk("Board:    %s\n", boards[adcvals_norm[2]+10*adcvals_norm[3]]);
+	printk("Hw Vers:  %i\n", adcvals_norm[1]);
+	printk("Boot dev: %s\n", bootings[adcvals_norm[4]/5]);
+	printk("Cpu Freq: %iMhz\n", freqs[adcvals_norm[4]%5]);
 }
 
-int board_boot_cfg_get_config(int * adcvals)
+int board_boot_cfg_get_config(int *adcvals, int *adcvals_n)
 {
-	int i, adcvals_norm[6];
+	int i;
 
-	for (i = 0; i < 6; i++) {
-		adcvals_norm[i] = normalize_adc(adcvals[i]);
-	}
+	for (i = 0; i < 6; i++)
+		adcvals_n[i] = normalize_adc(adcvals[i]);
 
-	return bootings[adcvals_norm[4]/5][0]; /* passing only first char */
+	return 0; /* passing only first char */
 }
 

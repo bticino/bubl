@@ -4,6 +4,7 @@
 
 extern int misc_setup0(void);
 extern int misc_setup1(void);
+extern void pinmux_setup(int bootmode);
 
 /* See sprufb3.pdf, Chapter 8 */
 typedef struct _DEVICE_AINTC_REGS_

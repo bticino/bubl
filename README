@@ -40,3 +40,5 @@ To copy u-boot to SD use something like this:
 
    dd bs=4k seek=1 if=u-boot.bin of=/dev/sdb
 
+bubl is also able to load u-boot from a NAND device. It is assumed that there
+are 4 copies of u-boot at 0x60000 offset one from other.

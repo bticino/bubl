@@ -20,8 +20,7 @@ STRIP		= $(CROSS_COMPILE)strip
 OBJCOPY		= $(CROSS_COMPILE)objcopy
 OBJDUMP		= $(CROSS_COMPILE)objdump
 
-CFLAGS = -O2 -Wall -ggdb -ffreestanding -Iinclude
-
+CFLAGS = -Os -Wall -ggdb -ffreestanding -Iinclude
 
 all: $(ALL)
 
@@ -31,11 +30,11 @@ obj-c += header.o pll.o hw-misc.o serial.o ddr.o timer.o adc.o board.o main.o
 obj-c += s_record.o
 obj-c += lib/ctype.o lib/string.o
 obj-c += lib/sprintf.o lib/strtol.o lib/printk.o lib/vsprintf.o lib/div64.o
-#obj-c += mmc/mmcsd_evm.o mmc/mmcsd_protocol.o mmc/mmc_glue.o
+obj-c += drivers/nand/nand.o drivers/nand/nand_base.o drivers/nand/nand_ids.o drivers/nand/davinci_nand.o
 obj-c += drivers/mmc/mmc.o drivers/mmc/davinci_mmc.o drivers/mmc/mmc-u-boot-glue.o
 
 # we have some division
-obj-s += libgcc/_udivsi3.o libgcc/_divsi3.o
+obj-s += libgcc/_udivsi3.o libgcc/_divsi3.o libgcc/_ashldi3.o libgcc/_lshrdi3.o
 obj-c += libgcc/div0.o
 
 obj-y := $(obj-s) $(obj-c)

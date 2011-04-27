@@ -12,8 +12,24 @@
 #include <s_record.h>
 
 #include "board.h" /* board selection using ADC values */
+#include "drivers/nand/nand.h"
 
 int boot_cfg;
+
+int sdmmc_init(void) __attribute__((weak));
+int sdmmc_init(void)
+{
+return 0;
+}
+int sdmmc_read_blocks(int dev, int start_blk, int num_blks,
+			int unsigned long addr) __attribute__((weak));
+int sdmmc_read_blocks(int dev, int start_blk, int num_blks,
+			int unsigned long addr)
+{
+return 0;
+}
+
+extern nand_info_t nand_info;
 
 static unsigned ram_test(int base)
 {
@@ -22,7 +38,7 @@ static unsigned ram_test(int base)
 
 	bptr[0] = 0xbadcaffe;
 	/* start from 4M going up; max is 256M by hw */
-	for (size = 1<<20; size < 1<<27; size <<=1)
+	for (size = 1<<20; size < 1<<27; size <<= 1)
 		if (bptr[size] == bptr[0])
 			break;
 	/*
@@ -39,8 +55,8 @@ static void __attribute__((__noreturn__)) do_srecord(void);
 void bubl_main(void)
 {
 	unsigned ramsize;
-	int usec1, usec2;
-	int i, adcvals[6];
+	/*int usec1;*/
+	int i, adcvals[6], adcvals_n[6];
 	struct pll_config *pll_cfg;
 	int err = 0;
 
@@ -53,28 +69,27 @@ void bubl_main(void)
 	for (i = 0; i < 6; i++)
 		adcvals[i] = adc_read(i);
 
-	pll_cfg = board_pll_get_config(adcvals);
+	board_boot_cfg_get_config(adcvals, adcvals_n);
+	pinmux_setup(adcvals_n[4]/5);
 
-	usec1 = nop(1000*1000);
+	pll_cfg = board_pll_get_config(adcvals_n);
+
+
 	pll_setup(pll_cfg);
-	usec2 = nop(1000*1000);
 
 	ddr_setup();
 	misc_setup1();
 	serial_setup();
 
-	printk("\nFunction %s (%s:%i), compile date %s-%s\n",
-	       __FILE__, __func__, __LINE__, __DATE__, __TIME__);
+	printk("\nBUBL - %s-%s\n", __DATE__, __TIME__);
 
-	board_dump_config(adcvals);
-
-	printk("1M nops before pll: %i usec\n", usec1);
-	printk("1M nops after  pll: %i usec\n", usec2);
+	board_dump_config(adcvals_n);
 
 	/* Check the RAM */
 	ramsize = ram_test(RAMADDR);
-	printk("RAM: 0x%08x bytes (%i KiB, %i MiB)\n",
-	       ramsize, ramsize >> 10, ramsize >> 20);
+/*	printk("RAM: 0x%08x bytes (%i KiB, %i MiB)\n",
+	       ramsize, ramsize >> 10, ramsize >> 20);*/
+	printk("RAM: %i MB\n", ramsize >> 20);
 
 	/* But also check that it is really working */
 	{
@@ -82,32 +97,33 @@ void bubl_main(void)
 		int stepa = 0x100234;
 		int stepv = 0xcacca;
 
-		for (i = j = 0; i < ramsize; i+= stepa)
+		for (i = j = 0; i < ramsize; i += stepa)
 			*(volatile unsigned long *)(RAMADDR + i)
 				= (j += stepv);
-		//asm volatile("" : : : "memory");
-		for (i = j = 0; i < ramsize; i+= stepa)
+		/* asm volatile("" : : : "memory"); */
+		for (i = j = 0; i < ramsize; i += stepa)
 			if (*(volatile unsigned long *)(RAMADDR + i)
 			    != (j += stepv)) {
-				printk("RAM error at %x)\n", RAMADDR + i);
+				printk("RAM err at %x)\n", RAMADDR + i);
 				err = 1;
 			}
 	}
 
 	if (err) {
-		printk("Restarting!\n");
+		printk("Restart\n");
 		reset_cpu(0);
 	}
 
+#if 0
 	/* Check the RAM speed */
 	usec1 = mw(1000*1000, (void *)RAMADDR);
-	printk("RAM speed: 1M writes in %i usec\n", usec1);
+	printk("RAM speed: 1M wr in %i usec\n", usec1);
+#endif
 
 	/* Now move the stack pointer to RAM */
 	asm volatile("sub sp, %0, #16" : : "r" (RAMADDR + ramsize) : "memory");
 
-	boot_cfg = board_boot_cfg_get_config(adcvals);
-	bubl_work(boot_cfg);
+	bubl_work(adcvals_n[4]/5);
 }
 
 /* This is the real work being done: the stack pointer is not at end-of-ram */
@@ -119,7 +135,7 @@ void __attribute__((noreturn, noinline)) bubl_work(int boot_cfg)
 	 * Read u-boot to address 0x81080000
 	 * Size loaded is 256k
 	 */
-	const unsigned long ub_addr = 0x81080000;
+	unsigned long ub_addr = 0x81080000;
 	const unsigned long ub_size = 1024 * 256;
 	const unsigned long blksize = 512;
 	unsigned long ub_num_blks;
@@ -128,21 +144,23 @@ void __attribute__((noreturn, noinline)) bubl_work(int boot_cfg)
 	/* make the memory area dirty, to be sure it works */
 	memset((void *)ub_addr, 0xca, ub_size);
 
-	switch (boot_cfg) {
-	case 'e':
+	if (!boot_cfg) {
 		if (!sdmmc_init()) {
-			printk("Loading %luKB from offset %luKB of SD or MMC number 0\n",
+			printk("MMC: Load %luKB offs %luKB\n",
 					ub_size, start_blk / 2);
 			sdmmc_read_blocks(0, start_blk, ub_num_blks, ub_addr);
 		}
-		break;
-	case 'N':
-		printk("NAND boot not yet implemented\n");
-		break;
-	default:
-		printk("boot device not recognized .. trying serial loader\n");
+	} else {
+		udelay(100);
+		printk("NAND: ");
+		if (!nand_init()) {
+			/*nand_read(&nand_info, 0, 0x4a300,
+			  (size_t*) &ub_num_blks, (unsigned char*) ub_addr); */
+			ub_addr = 0x81100000;
+			ub_addr = read_uboot_flash(&nand_info, 0,
+				  (unsigned char *) ub_addr);
+		}
 	}
-
 
 	/* If  u-boot is not really there, use srecord */
 	if (((u32 *)ub_addr)[0xf] != 0xdeadbeef)
@@ -164,14 +182,14 @@ void do_srecord(void)
 {
 	unsigned long addr;
 
-	puts("\n\nSerial loader: waiting for s-record fields\n");
+	puts("\n\nSerial loader: s-record\n");
 	addr = load_serial();
 	if (addr != ~0) {
-		printk("Load successful: jumping to 0x%08x\n", (int)addr);
+		printk("Load OK: jumping to 0x%08x\n", (int)addr);
 		asm("ldr pc, %0" : /* no output */ : "m" (addr));
 	}
 	/* If successful, we won't get here */
-	printk("\nLoad failed, back to work...\n");
+	printk("\nLoad KO\n");
 	bubl_work(boot_cfg);
 }
 
@@ -193,16 +211,16 @@ static unsigned long load_serial(void)
 	int	line_count =  0;
 
 	while (gets(record, SREC_MAXRECLEN)) {
-		type = srec_decode (record, &binlen, &addr, binbuf);
+		type = srec_decode(record, &binlen, &addr, binbuf);
 		if (type < 0)
-			return (~0);	/* Invalid S-Record		*/
+			return ~0;	/* Invalid S-Record		*/
 
 		switch (type) {
 		case SREC_DATA2:
 		case SREC_DATA3:
 		case SREC_DATA4:
 			store_addr = addr;
-			memcpy ((char *)(store_addr), binbuf, binlen);
+			memcpy((char *)(store_addr), binbuf, binlen);
 			if ((store_addr) < start_addr)
 				start_addr = store_addr;
 			if ((store_addr + binlen - 1) > end_addr)
@@ -211,12 +229,12 @@ static unsigned long load_serial(void)
 		case SREC_END2:
 		case SREC_END3:
 		case SREC_END4:
-			udelay (10000);
+			udelay(10000);
 			size = end_addr - start_addr + 1;
-			printk ("\n"
-				"## First Load Addr = 0x%08lX\n"
-				"## Last  Load Addr = 0x%08lX\n"
-				"## Total Size      = 0x%08lX = %ld Bytes\n",
+			printk("\n"
+				"# First Ld Addr = 0x%08lX\n"
+				"# Last  Ld Addr = 0x%08lX\n"
+				"# Total Size    = 0x%08lX = %ld Bytes\n",
 				start_addr, end_addr, size, size
 				);
 			return addr;
@@ -226,7 +244,7 @@ static unsigned long load_serial(void)
 		}
 		/* print a '.' every 100 lines */
 		if ((++line_count % 100) == 0)
-			putc ('.');
+			putc('.');
 	}
 	return ~0;
 }

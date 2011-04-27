@@ -139,25 +139,39 @@ int misc_setup0(void)
 		psc_turn_on(15); /* mmc == 15 */
 		psc_turn_on(26); /* gpio == 26 */
 	}
-
-	/*
-	 * BASI Board pinmux
-	 * (Default direction for GIOs is input)
-	 * MMC reset released (43)
-	 * Eth reset off (44),
-	 * boot flash on (45),
-	 */
-	DEVICE_pinmuxControl(0,0xFFFFFFFF,0x00007F55);
-
-	DEVICE_pinmuxControl(1,0xFFFFFFFF,0x00430000);
-	DEVICE_pinmuxControl(2,0xFFFFFFFF,0x00001F80);
-
-	/* EMAC, UART0 */
-	DEVICE_pinmuxControl(3,0xFFFFFFFF,0x001A0000);
-
-	DEVICE_pinmuxControl(4,0xFFFFFFFF,0x00000000);
-
 	return 0;
+}
+
+void pinmux_setup(int bootmode)
+{
+	if (!bootmode) {
+	/* eMMC */
+		/*
+		 * BASI Board pinmux
+		 * (Default direction for GIOs is input)
+		 * MMC reset released (43)
+		 * Eth reset off (44),
+		 * boot flash on (45),
+		 */
+		DEVICE_pinmuxControl(0,0xFFFFFFFF,0x00007F55);
+
+		DEVICE_pinmuxControl(1,0xFFFFFFFF,0x00430000);
+		DEVICE_pinmuxControl(2,0xFFFFFFFF,0x00001F80);
+
+		/* EMAC, UART0 */
+		DEVICE_pinmuxControl(3,0xFFFFFFFF,0x001A0000);
+
+		DEVICE_pinmuxControl(4,0xFFFFFFFF,0x00000000);
+	/* --- */
+	} else {
+	/* NAND */
+		DEVICE_pinmuxControl(0, 0xFFFFFFFF, 0x00007F55);
+		DEVICE_pinmuxControl(1, 0xFFFFFFFF, 0x00430000);
+		DEVICE_pinmuxControl(2, 0xFFFFFFFF, 0x00001840);
+		DEVICE_pinmuxControl(3, 0xFFFFFFFF, 0x001AFFFF);
+		DEVICE_pinmuxControl(4, 0xFFFFFFFF, 0x00000000);
+	/* --- */
+	}
 }
 
 int misc_setup1(void)
