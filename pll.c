@@ -13,7 +13,7 @@ int pll_bypass(void) /* This function added by ARub, as jtag has no reset */
 	/* Put both devices in bypass mode */
 	pll1_base[PLL_PLLCTL] = 0;
 	pll2_base[PLL_PLLCTL] = 0;
-	trivial_loop(150);
+	nop(150);
 	pll1_base[PLL_PLLCTL] = 8; /* reset */
 	pll2_base[PLL_PLLCTL] = 8; /* reset */
 	return 0;
@@ -29,7 +29,7 @@ static void __pll_reset1(volatile u32 *base)
 	/* Note: original code cleared bit 8 in PLLCTL, but it's unused */
 	base[PLL_PLLCTL] &= ~(1 << 5);	/* enable PLLEN as source */
 	base[PLL_PLLCTL] &= ~(1 << 0);	/* and then PLLEN itself -> bypass */
-	udelay(2); 			/* "4 reference clock cycles" */
+	udelay(2);			/* "4 reference clock cycles" */
 	base[PLL_PLLCTL] |=  (1 << 3);	/* Reset */
 	udelay(10);			/* "at least 5 microseconds" */
 	base[PLL_PLLCTL] &= ~(1 << 3);	/* Out of reset */
@@ -59,7 +59,7 @@ static void __pll_wait_lock(volatile u32 *base)
 	else
 		addr = &SYSTEM->PLL1_CONFIG;
 
-	while ( (*addr & (7 << 24)) != (7 << 24))
+	while ((*addr & (7 << 24)) != (7 << 24))
 		;
 }
 
@@ -83,7 +83,7 @@ static void __pll_setup_one(volatile u32 *base, struct pll_config_one *cfg)
 	for (i = 0, div = cfg->divs; i < cfg->ndivs; i++, div++)
 		base[div->addr] = (1 << 15) | div->value;
 
-	trivial_loop(300); /* FIXME */
+	nop(300);
 
 	/* Write the align register: all of them, but tell pll1 from pll2 */
 	if (cfg->ndivs > 4)
@@ -108,7 +108,7 @@ int pll_setup(struct pll_config *cfg)
 	__pll_setup_one(pll1_base, &cfg->pll1);
 	__pll_setup_one(pll2_base, &cfg->pll2);
 
-	//do this after PLL's have been set up
+	/*do this after PLL's have been set up*/
 	SYSTEM->PERI_CLKCTRL = cfg->clkctrl;
 	return 0;
 }

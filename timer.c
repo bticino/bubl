@@ -69,7 +69,7 @@ u32 timer_read(void)
 u32 count_to_usec(u32 count)
 
 {
-	return count / 8;
+	return count >> 3;
 }
 
 /* This get_jiffies is used by Linux code. Use 1kHZ fake rate */
@@ -98,7 +98,7 @@ int nop(int nloop)
 	u32 count;
 	int i;
 
-	nloop = (nloop + 128) / 256;
+	nloop = (nloop + 128) >> 8;
 	count = timer_read();
 	for (i = 0; i < nloop; i++)
 		asm volatile(".rep 256\n\tnop\n.endr");
@@ -112,7 +112,7 @@ int mw(int nloop, void *addr)
 	u32 count;
 	int i;
 
-	nloop = (nloop + 128) / 256;
+	nloop = (nloop + 128) >> 8;
 	count = timer_read();
 	for (i = 0; i < nloop; i++)
 		asm volatile(".rep 16\n\t"
