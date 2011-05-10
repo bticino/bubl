@@ -22,6 +22,7 @@ OBJDUMP		= $(CROSS_COMPILE)objdump
 
 CFLAGS = -Os -Wall -ggdb -ffreestanding -Iinclude
 
+
 all: $(ALL)
 
 # objects that make the program
@@ -40,7 +41,7 @@ obj-c += libgcc/div0.o
 obj-y := $(obj-s) $(obj-c)
 
 # main rule
-$(ELF): $(obj-y) $(LDS) 
+$(ELF): $(obj-y) $(LDS)
 	$(LD) -Map $(MAP) -T $(LDS) $(obj-y) $(LDFLAGS) -o $@
 
 # binary targets

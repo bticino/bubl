@@ -1,3 +1,4 @@
+#include <bubl/types.h>
 /* Crappy compat stuff */
 typedef u8 uchar;
 typedef u16 ushort;
@@ -18,6 +19,3 @@ typedef struct {int unused;} bd_t;
 #define MIN(x, y)  min(x, y)
 #define MAX(x, y)  max(x, y)
 
-/* These only live inside if(0), so just prototype them */
-extern void *malloc(int);
-extern void free(void *);

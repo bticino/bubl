@@ -17,7 +17,7 @@
  *       beware of side effects!
  */
 
-#include <linux/types.h>
+#include <bubl/types.h>
 
 extern uint32_t __div64_32(uint64_t *dividend, uint32_t divisor);
 

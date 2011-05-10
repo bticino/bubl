@@ -48,17 +48,19 @@ static unsigned ram_test(int base)
 	return size << 2;
 }
 
-static void bubl_work(int);
+static void bubl_work(void);
 static void __attribute__((__noreturn__)) do_srecord(void);
+int adcvals_n[6];
 
 /* This functions turns on the system, and calls the working function */
 void bubl_main(void)
 {
 	unsigned ramsize;
 	/*int usec1;*/
-	int i, adcvals[6], adcvals_n[6];
+	int i, adcvals[6];
 	struct pll_config *pll_cfg;
 	int err = 0;
+	u32 *reg;
 
 	misc_setup0();
 	timer_setup();
@@ -71,7 +73,13 @@ void bubl_main(void)
 
 	board_boot_cfg_get_config(adcvals, adcvals_n);
 	pinmux_setup(adcvals_n[4]/5);
-
+	/* on DINGO turn on GIO94 - monitor start-up timings */
+	if (!adcvals_n[3] && adcvals_n[2] == 2) {
+		reg = 0x01c67060;
+		*reg = 0xBFFFFFFF;
+		reg = 0x01c67068;
+		*reg = 0x40000000;
+	}
 	pll_cfg = board_pll_get_config(adcvals_n);
 
 
@@ -123,11 +131,11 @@ void bubl_main(void)
 	/* Now move the stack pointer to RAM */
 	asm volatile("sub sp, %0, #16" : : "r" (RAMADDR + ramsize) : "memory");
 
-	bubl_work(adcvals_n[4]/5);
+	bubl_work();
 }
 
 /* This is the real work being done: the stack pointer is not at end-of-ram */
-void __attribute__((noreturn, noinline)) bubl_work(int boot_cfg)
+void __attribute__((noreturn, noinline)) bubl_work()
 {
 	unsigned long start_blk = 4096 / 512; /* start at 4kB within the card */
 
@@ -139,8 +147,12 @@ void __attribute__((noreturn, noinline)) bubl_work(int boot_cfg)
 	const unsigned long ub_size = 1024 * 256;
 	const unsigned long blksize = 512;
 	unsigned long ub_num_blks;
+	int boot_cfg;
+	int *reg;
+
 	ub_num_blks = ub_size / blksize;
 
+	boot_cfg = adcvals_n[4] / 5;
 	/* make the memory area dirty, to be sure it works */
 	memset((void *)ub_addr, 0xca, ub_size);
 
@@ -169,6 +181,12 @@ void __attribute__((noreturn, noinline)) bubl_work(int boot_cfg)
 	if (testc() && getc() == 's')
 		do_srecord();
 
+	/* on DINGO turn off GIO94 - monitor start-up timings */
+	if (!adcvals_n[3] && adcvals_n[2] == 2) {
+		reg = 0x01c6706C;
+		*reg = 0x40000000;
+	}
+
 	/* jump to u-boot */
 	asm("ldr pc, %0" : /* no output */ : "m" (ub_addr));
 
@@ -190,7 +208,7 @@ void do_srecord(void)
 	}
 	/* If successful, we won't get here */
 	printk("\nLoad KO\n");
-	bubl_work(boot_cfg);
+	bubl_work();
 }
 
 /*
