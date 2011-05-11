@@ -14,7 +14,7 @@
 static struct davinci_mmc mmc_sd0 = {
 	.reg_base = (struct davinci_mmc_regs *)DAVINCI_MMC_SD0_BASE,
 	.input_clk = 121500000,
-//	.host_caps = MMC_MODE_4BIT,
+	.host_caps = MMC_MODE_4BIT,
 	.voltages = MMC_VDD_32_33 | MMC_VDD_33_34,
 	.version = MMC_CTLR_VERSION_2,
 };
@@ -30,7 +30,6 @@ int sdmmc_init(void)
 	davinci_mmc_init(&unused_bd, &mmc_sd0);
 
 	mmc = find_mmc_device(0);
-	printk("%s: mmc = %p\n", __func__, mmc);
 	mmc_init(mmc);
 	return 0;
 }

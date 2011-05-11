@@ -958,6 +958,8 @@ int mmc_startup(struct mmc *mmc)
 	} else {
 		if (mmc->card_caps & MMC_MODE_4BIT) {
 
+			printf("mmc: 4bit\n");
+
 			/* Set the card to use 4 bit*/
 			err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
 					EXT_CSD_BUS_WIDTH,
@@ -978,15 +980,18 @@ int mmc_startup(struct mmc *mmc)
 				return err;
 
 			mmc_set_bus_width(mmc, 8);
-		}
+		} else
+			printf("mmc: 1bit\n");
 
 		if (mmc->card_caps & MMC_MODE_HS) {
 			if (mmc->card_caps & MMC_MODE_HS_52MHz)
 				mmc_set_clock(mmc, 52000000);
 			else
 				mmc_set_clock(mmc, 26000000);
-		} else
+		} else {
+				printf("mmc: 50Mhz\n");
 				mmc_set_clock(mmc, 50000000);
+		}
 	}
 
 	/* fill in device description */
