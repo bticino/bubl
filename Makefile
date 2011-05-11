@@ -20,8 +20,7 @@ STRIP		= $(CROSS_COMPILE)strip
 OBJCOPY		= $(CROSS_COMPILE)objcopy
 OBJDUMP		= $(CROSS_COMPILE)objdump
 
-CFLAGS = -Os -Wall -ggdb -ffreestanding -Iinclude
-
+CFLAGS = -Os -Wall -ggdb -ffreestanding -Iinclude -DCOMPLETELY_QUIET
 
 all: $(ALL)
 

@@ -20,7 +20,9 @@ int vprintk(const char *fmt, va_list args)
 	int ret;
 
 	ret = vsprintf(printk_buf, fmt, args);
+#ifndef COMPLETELY_QUIET
 	puts(printk_buf);
+#endif
 	return ret;
 }
 
