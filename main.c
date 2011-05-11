@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2011 Bticino S.p.A.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #include <bubl/io.h>
 #include <bubl/pll.h>
 #include <bubl/hw.h>
@@ -11,8 +29,31 @@
 #include "drivers/mmc/mmc-u-boot-glue.h"
 #include <s_record.h>
 
-#include "board.h" /* board selection using ADC values */
+/*
+ * board selection using normalized ADC values, see global array adcvals_n
+ *
+ * adcvals_n[1] : HW_VERSION
+ * adcvals_n[2] : BOARD_IDENTIFICATION (LSB)
+ * adcvals_n[3] : BOARD_IDENTIFICATION (MSB)
+ * adcvals_n[4] : FREQ-BOOT_MODE
+ * adcvals_n[5] : LCD MODEL (DINGO only!)
+ *
+ * Supported boards:
+ * adcvals_n[3]		adcvals_n[2]	board name	status
+ *	0			0	   bmx
+ *	0			1	   basi		  ok
+ *	0			2	   dingo	  ok
+ *	0			3	   stork
+ *	0			4	   owl
+ *	0			5	   jumbo-1
+ *	0			6	   jumbo-2
+ *	0			7	   arges
+ *
+ */
+#include "board.h"
 #include "drivers/nand/nand.h"
+
+#undef RAM_SPEED_TEST
 
 int boot_cfg;
 
@@ -56,7 +97,6 @@ int adcvals_n[6];
 void bubl_main(void)
 {
 	unsigned ramsize;
-	/*int usec1;*/
 	int i, adcvals[6];
 	struct pll_config *pll_cfg;
 	int err = 0;
@@ -70,16 +110,28 @@ void bubl_main(void)
 	adc_setup();
 	for (i = 0; i < 6; i++)
 		adcvals[i] = adc_read(i);
-
 	board_boot_cfg_get_config(adcvals, adcvals_n);
-	pinmux_setup(adcvals_n[4]/5);
-	/* on DINGO turn on GIO94 - monitor start-up timings */
+
+	pinmux_setup(adcvals_n[4] / 5);
+
+	/*
+	 * on BASI board turns on GIO40 - LED
+	 * it on by default anyway
+	 */
+	if (!adcvals_n[3] && adcvals_n[2] == 1) {
+		reg = (u32 *)0x01c67038;
+		*reg = *reg & ~0x100;
+		reg = (u32 *)0x01c6703c;
+		*reg = *reg & ~0x100;
+	}
+	/* on DINGO board turns on GIO94 - monitor start-up timings */
 	if (!adcvals_n[3] && adcvals_n[2] == 2) {
-		reg = 0x01c67060;
+		reg = (u32 *)0x01c67060;
 		*reg = 0xBFFFFFFF;
-		reg = 0x01c67068;
+		reg = (u32 *)0x01c67068;
 		*reg = 0x40000000;
 	}
+
 	pll_cfg = board_pll_get_config(adcvals_n);
 
 
@@ -95,8 +147,6 @@ void bubl_main(void)
 
 	/* Check the RAM */
 	ramsize = ram_test(RAMADDR);
-/*	printk("RAM: 0x%08x bytes (%i KiB, %i MiB)\n",
-	       ramsize, ramsize >> 10, ramsize >> 20);*/
 	printk("RAM: %i MB\n", ramsize >> 20);
 
 	/* But also check that it is really working */
@@ -118,11 +168,11 @@ void bubl_main(void)
 	}
 
 	if (err) {
-		printk("Restart\n");
+		printk("TRAP: Restart\n");
 		reset_cpu(0);
 	}
 
-#if 0
+#ifdef RAM_SPEED_TEST
 	/* Check the RAM speed */
 	usec1 = mw(1000*1000, (void *)RAMADDR);
 	printk("RAM speed: 1M wr in %i usec\n", usec1);
@@ -147,16 +197,16 @@ void __attribute__((noreturn, noinline)) bubl_work()
 	const unsigned long ub_size = 1024 * 256;
 	const unsigned long blksize = 512;
 	unsigned long ub_num_blks;
-	int boot_cfg;
-	int *reg;
+	int boot_from_nand;
+	u32 *reg;
 
 	ub_num_blks = ub_size / blksize;
 
-	boot_cfg = adcvals_n[4] / 5;
+	boot_from_nand = adcvals_n[4] / 5;
 	/* make the memory area dirty, to be sure it works */
 	memset((void *)ub_addr, 0xca, ub_size);
 
-	if (!boot_cfg) {
+	if (!boot_from_nand) {
 		if (!sdmmc_init()) {
 			printk("MMC: Load %luKB offs %luKB\n",
 					ub_size, start_blk / 2);
@@ -181,9 +231,14 @@ void __attribute__((noreturn, noinline)) bubl_work()
 	if (testc() && getc() == 's')
 		do_srecord();
 
+	/* on BASI turn off GIO40 - LED */
+	if (!adcvals_n[3] && adcvals_n[2] == 1) {
+		reg = 0x01c6703C;
+		*reg = *reg | 0x100;
+	}
 	/* on DINGO turn off GIO94 - monitor start-up timings */
 	if (!adcvals_n[3] && adcvals_n[2] == 2) {
-		reg = 0x01c6706C;
+		reg = (u32 *)0x01c6706C;
 		*reg = 0x40000000;
 	}
 
