@@ -9,7 +9,7 @@ ubl_header = {
 	.magic		= 0xa1aced00,
 	.entry_point	= _start,
 	.size		= (int)__size__,
-	.params		= 0x30,
+	.params		= 0x0100,
 	.startaddr	= _end_header,
 	.loadaddr	= _end_header,
 };
