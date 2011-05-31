@@ -15,14 +15,12 @@
 
 static char printk_buf[BUBL_PK_BUF];
 
-int vprintk(const char *fmt, va_list args)
+__attribute__((weak)) int vprintk(const char *fmt, va_list args)
 {
 	int ret;
 
 	ret = vsprintf(printk_buf, fmt, args);
-#ifndef COMPLETELY_QUIET
 	puts(printk_buf);
-#endif
 	return ret;
 }
 

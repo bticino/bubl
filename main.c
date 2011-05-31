@@ -29,6 +29,14 @@
 #include "drivers/mmc/mmc-u-boot-glue.h"
 #include <s_record.h>
 
+#ifdef COMPLETELY_QUIET
+inline int vprintk(const char *fmt, va_list args)
+{
+	return 0;
+}
+#endif
+
+
 /*
  * board selection using normalized ADC values, see global array adcvals_n
  *
