@@ -177,7 +177,7 @@ void pinmux_setup(int bootmode)
 int misc_setup1(void)
 {
 	AEMIF->AWCCR = 0xff;
-	AEMIF->A1CR = 0x40400204;
+	AEMIF->A1CR = 0x00100084;
 	AEMIF->NANDFCR |= 1;
 	AEMIF->A2CR = 0x00a00505;
 	return 0;
