@@ -82,7 +82,7 @@ static struct pll_postdivs Mhz270_pll1_divs[] = {
 	{ PLL_PLLDIV5,  1},	/* 432/2 = 216 -> VPSS */
 	{ PLL_PLLDIV6, 17},	/* 432/18 = 24 -> VENC */
 	{ PLL_PLLDIV7,  0},	/* 432 -> DDR (post divided by 2 = 216 */
-	{ PLL_PLLDIV8,  3},	/* 432/4 = 108 -> MMC0 */
+	{ PLL_PLLDIV8,  4},     /* 432/5 = 86 -> MMC0 */
 	{ PLL_PLLDIV9,  1},	/* 432/2 = 216 -> CLKOUT */
 };
 
