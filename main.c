@@ -135,7 +135,7 @@ void bubl_main(void)
 	/* on DINGO board turns on GIO94 - monitor start-up timings */
 	if (!adcvals_n[3] && adcvals_n[2] == 2) {
 		reg = (u32 *)0x01c67060;
-		*reg = 0xBFFFFFFF;
+		*reg = *reg & 0xBFFFFFFF;
 		reg = (u32 *)0x01c67068;
 		*reg = 0x40000000;
 	}
