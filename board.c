@@ -89,7 +89,7 @@ static struct pll_postdivs Mhz270_pll1_divs[] = {
 /* Input here is 540 MHz */
 static struct pll_postdivs Mhz270_pll2_divs[] = {
 	{ PLL_PLLDIV2,  1},	/* 540/2 = 270 -> ARM */
-	{ PLL_PLLDIV4, 28},	/* 540/29 = 18 -> VOICE */
+	{ PLL_PLLDIV4, 26},	/* 540/29 = 20.7692 -> VOICE */
 	{ PLL_PLLDIV5,  7},	/* 540/8 = 67 -> VIDEO */
 };
 
