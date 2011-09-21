@@ -153,6 +153,8 @@ void bubl_main(void)
 	misc_setup1();
 	serial_setup();
 
+	WDT_FLAG_ON();
+
 	printk("\nBUBL - %s-%s\n", __DATE__, __TIME__);
 
 	board_dump_config(adcvals_n);

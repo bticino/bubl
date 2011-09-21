@@ -9,6 +9,12 @@
  * Partly reordered and cleaned up from crappy "corporate-style" code.
  */
 
+#define TMPBUF		(unsigned int *)(0x17ff8)
+#define TMPSTATUS	(unsigned int *)(0x17ff0)
+#define FLAG_PORRST	0x00000001
+#define FLAG_WDTRST	0x00000002
+#define FLAG_FLGON	0x00000004
+#define FLAG_FLGOFF	0x0000001
 
 /* This initial part is copied from here and there, to make the rest happy */
 static void DEVICE_pinmuxControl(u32 regOffset, u32 mask, u32 value)
@@ -43,27 +49,55 @@ static void POR_RESET(void)
 {
 	if (pll1_base[PLL_RSTYPE] & 3) {
 		VPSS_SYNC_RESET();  // VPSS sync reset
+		*TMPBUF = 0;
+		*TMPSTATUS |= FLAG_PORRST;
 		*GPINT_GPEN = 0x00020000;
 		*GPTDAT_GPDIR = 0x00020002;
-		while(1)
+		while (1)
 			;
 	}
+}
+
+void WDT_RESET()
+{
+	volatile unsigned int s;
+
+	if (*TMPBUF == 0x591b3ed7) {
+		*TMPBUF = 0;
+		*TMPSTATUS |= FLAG_PORRST;
+		*TMPSTATUS |= FLAG_FLGOFF;
+
+		for (s = 0; s < 0x100; s++)
+			;
+		VPSS_SYNC_RESET();
+		*GPINT_GPEN = 0x00020000;	/* WDT */
+		*GPTDAT_GPDIR = 0x00020002;	/* execute > */
+		while (1)
+			;
+	}
+}
+
+void WDT_FLAG_ON()
+{
+	SYSTEM->VPSS_CLKCTL &= 0xffffff7f;      /* VPSS_CLKMD 1:2 */
+	*TMPBUF = 0x591b3ed7;
+	*TMPSTATUS |= FLAG_FLGON;
 }
 
 static void psc_turn_on(int id)
 {
 	/* wait for previous transitions to complete (GOSTAT bit) */
-	while(PSC->PTSTAT & 1)
+	while (PSC->PTSTAT & 1)
 		;
 	/* set next to on and start transition (GO bit) */
 	PSC->MDCTL[id] |= 3;
 	PSC->PTCMD = 1;
 
 	/* wait for this transitions to complete (GOSTAT bit) */
-	while(PSC->PTSTAT & 1)
+	while (PSC->PTSTAT & 1)
 		;
 	/* wait for the device to be in state 3 (needed?) */
-	while((PSC->MDSTAT[id] & 0x1f) != 3)
+	while ((PSC->MDSTAT[id] & 0x1f) != 3)
 		;
 }
 
@@ -129,6 +163,7 @@ int misc_setup0(void)
 	AINTC->IRQ1 = 0xFFFFFFFF;
 
 	POR_RESET();
+	WDT_RESET();
 
 	// System PSC setup - enable all
 	if (1) {
