@@ -89,7 +89,7 @@ static struct pll_postdivs Mhz270_pll1_divs[] = {
 /* Input here is 540 MHz */
 static struct pll_postdivs Mhz270_pll2_divs[] = {
 	{ PLL_PLLDIV2,  1},	/* 540/2 = 270 -> ARM */
-	{ PLL_PLLDIV4, 26},	/* 540/29 = 20.7692 -> VOICE */
+	{ PLL_PLLDIV4, 23},	/* 540/24 = 2.25 -> VOICE */
 	{ PLL_PLLDIV5,  7},	/* 540/8 = 67 -> VIDEO */
 };
 
@@ -109,7 +109,7 @@ static struct pll_config Mhz270_pll_config = {
 		.ndivs =	ARRAY_SIZE(Mhz270_pll2_divs)
 	},
 	/* The magic value selects arm from pll2 and other random stuff */
-	.clkctrl = 0x243F04FC
+	.clkctrl = 0x243F057C
 };
 
 
