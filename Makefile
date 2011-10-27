@@ -74,7 +74,7 @@ clean:
 $(VERSION_FILE):
 		@(echo $@)
 		@( printf '#define BUBL_VERSION "<BUBL %s%s"\n' "$(BUBL_VERSION)" \
-		 '$(shell $(TOPDIR)/setlocalversion $(TOPDIR))' ) > $@.tmp
+		 '$(shell $(TOPDIR)/setlocalversion $(TOPDIR))>' ) > $@.tmp
 		@cmp -s $@ $@.tmp && rm -f $@.tmp || mv -f $@.tmp $@
 
 .depend: $(obj-s:.o=.S) $(obj-c:.o=.c) $(VERSION_FILE)
